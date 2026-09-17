@@ -1580,6 +1580,7 @@ function Outreach({ notify }) {
 
 /* ---------- Deal Pipeline ---------- */
 function Pipeline({ go }) {
+  const [openDeal, setOpenDeal] = useState(null);
   const groups = [["Early stage", ["Initial Review", "NDA", "CIM Received"]], ["Evaluation", ["Management Meeting", "LOI"]], ["Execution", ["Diligence", "Investment Committee"]]];
   return (
     <div>
@@ -1596,7 +1597,7 @@ function Pipeline({ go }) {
                     <div className="flex items-center justify-between px-1" style={{ marginBottom: 6 }}><span style={{ fontSize: 12, fontWeight: 600, color: T.text }}>{s}</span><span className="tabular-nums" style={{ fontSize: 11, color: T.muted }}>{items.length}</span></div>
                     {items.length === 0 && <div className="px-2 py-1.5" style={{ fontSize: 11, color: T.unknown, border: `1px dashed ${T.border}`, borderRadius: 6 }}>Empty</div>}
                     {items.map((d) => (
-                      <button key={d.name} onClick={() => go(d.name === "Project Falcon" ? "cim" : "pipeline")} className="w-full text-left bg-white" style={{ borderRadius: 12, padding: "12px 14px", marginBottom: 8, boxShadow: SHADOW, transition: EASE }} onMouseEnter={(e) => { e.currentTarget.style.boxShadow = SHADOW_HOVER; e.currentTarget.style.transform = "translateY(-2px)"; }} onMouseLeave={(e) => { e.currentTarget.style.boxShadow = SHADOW; e.currentTarget.style.transform = "none"; }}>
+                      <button key={d.name} onClick={() => (d.name === "Project Falcon" ? go("cim") : setOpenDeal(d))} className="w-full text-left bg-white" style={{ borderRadius: 12, padding: "12px 14px", marginBottom: 8, boxShadow: SHADOW, transition: EASE }} onMouseEnter={(e) => { e.currentTarget.style.boxShadow = SHADOW_HOVER; e.currentTarget.style.transform = "translateY(-2px)"; }} onMouseLeave={(e) => { e.currentTarget.style.boxShadow = SHADOW; e.currentTarget.style.transform = "none"; }}>
                         <div style={{ fontSize: 11, letterSpacing: "0.05em", textTransform: "uppercase", color: T.muted }}>{d.name.replace("Project ", "Project ")}</div>
                         <div style={{ fontSize: 13, color: T.text, fontWeight: 500 }}>{d.sector}</div>
                         <div className="tabular-nums" style={{ fontSize: 16, fontWeight: 650, color: T.text, marginTop: 6 }}>{d.ev} <span style={{ fontSize: 11, color: T.muted, fontWeight: 400 }}>EV</span></div>
@@ -2499,14 +2500,21 @@ function ResearchLibrary() {
   const session = ws.research.map((r) => [r.title, r.type, r.producedBy, new Date(r.created).toLocaleDateString(), r.deal || r.thesis, FileText, r]);
   const docs0 = [["Medical device outsourcing outlook 2026", "Market research", "Market Agent", "Today", "Medical Device thesis", Globe], ["Aerospace build-rate tracker Q3", "Market research", "Market Agent", "Yesterday", "Aerospace thesis", Globe], ["Precision molder peer margin set (8 companies)", "Benchmark", "Financial Agent", "2 days ago", "Medical Device thesis", BarChart3], ["Reshoring signals in component supply", "Market research", "Research Agent", "1 week ago", "Medical Device thesis", Globe], ["Elevator and escalator parts distribution map", "Sector map", "Research Agent", "2 weeks ago", "Distribution thesis", Layers], ["Market Research #14: Program dependency in aerospace suppliers", "Research note", "Red-Team Agent", "3 weeks ago", "Project Falcon", FileText]];
   const demoRecs = docs0.map(([t, ty, a, u, rel, I]) => [t, ty, a, u, rel, I, { title: t, type: ty, producedBy: a, created: new Date().toISOString(), deal: /falcon/i.test(rel) ? rel : "", thesis: /thesis/i.test(rel) ? rel : "", sources: ["Synthetic demonstration record"], summary: `Synthetic ${ty.toLowerCase()} produced by the ${a} for the ${rel}. In a live deployment this record would hold the generated research note, its sources and key findings.`, findings: [], demo: true }]);
-  const docs = [...session, ...demoRecs];
-  const Sel = ({ label }) => <select className="bg-white" style={{ fontSize: 13, padding: "7px 12px", borderRadius: R.chip, border: `1px solid ${T.border}`, color: T.muted }}><option>{label}</option></select>;
+  const all = [...session, ...demoRecs];
+  const [qs, setQs] = useState("");
+  const [fType, setFType] = useState("Type");
+  const [fBy, setFBy] = useState("Produced by");
+  const [fRel, setFRel] = useState("Related thesis");
+  const docs = all.filter(([t, ty, a, u, rel]) => (fType === "Type" || ty === fType) && (fBy === "Produced by" || a === fBy) && (fRel === "Related thesis" || rel === fRel) && (t + ty + a + rel).toLowerCase().includes(qs.toLowerCase()));
+  const opts = (i) => [...new Set(all.map((d) => d[i]))];
+  const Sel = ({ label, v, set, values }) => <select value={v} onChange={(e) => set(e.target.value)} className="bg-white" style={{ fontSize: 13, padding: "7px 12px", borderRadius: R.chip, border: `1px solid ${T.border}`, color: v === label ? T.muted : T.text }}>{[label, ...values].map((o) => <option key={o}>{o}</option>)}</select>;
   return (
     <div>
       <PageHeader title="Research Library" sub="Research notes, benchmarks and sector maps, each tied to the thesis or deal that requested it." crumbs={["Knowledge", "Research Library"]} demo="Synthetic documents" />
       <div className="flex items-center gap-2" style={{ marginBottom: 16 }}>
-        <span className="flex items-center gap-2 px-4 bg-white" style={{ border: `1px solid ${T.border}`, borderRadius: R.chip, width: 300 }}><Search size={13} style={{ color: T.muted }} /><input placeholder="Search research" className="flex-1 outline-none" style={{ fontSize: 13, padding: "6px 0" }} /></span>
-        <Sel label="Type" /><Sel label="Produced by" /><Sel label="Date" /><Sel label="Related thesis" />
+        <span className="flex items-center gap-2 px-4 bg-white" style={{ border: `1px solid ${T.border}`, borderRadius: R.chip, width: 300 }}><Search size={13} style={{ color: T.muted }} /><input value={qs} onChange={(e) => setQs(e.target.value)} placeholder="Search research" className="flex-1 outline-none" style={{ fontSize: 13, padding: "6px 0" }} /></span>
+        <Sel label="Type" v={fType} set={setFType} values={opts(1)} /><Sel label="Produced by" v={fBy} set={setFBy} values={opts(2)} /><Sel label="Related thesis" v={fRel} set={setFRel} values={opts(4)} />
+        <span className="ml-auto" style={{ fontSize: 12, color: T.muted }}>{docs.length} of {all.length}</span>
       </div>
       <Card pad={false}>
         <table className="w-full" style={{ fontSize: 13 }}><thead><tr style={{ color: T.muted, fontSize: 11 }}>{["Title", "Type", "Produced by", "Related to", "Updated"].map((h) => <th key={h} className="text-left font-medium px-4 py-2" style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
@@ -2634,7 +2642,7 @@ function Evaluations() {
 
 /* ---------- App ---------- */
 function AppInner() {
-  const [route, setRoute] = useState("home");
+  const [route, setRoute] = useState(() => (typeof window !== "undefined" && window.__mcmRoute) || "home");
   const [companyId, setCompanyId] = useState("pms");
   const [collapsed, setCollapsed] = useState(false);
   const [search, setSearch] = useState(false);

@@ -19,7 +19,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { TASKS } from "../src/services/aiSchemas.js";
 
-export const config = { maxDuration: 60, api: { bodyParser: { sizeLimit: "4.5mb" } } };
+export const config = { maxDuration: 60 };
 
 const DEFAULT_MODEL = process.env.ANTHROPIC_MODEL_DEFAULT || "claude-sonnet-5";
 const DOC_MODEL = process.env.ANTHROPIC_MODEL_DOCUMENT || DEFAULT_MODEL;

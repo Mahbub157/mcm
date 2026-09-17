@@ -46,3 +46,19 @@ All of this lives in session state (`src/services/storage.jsx`) and survives nav
 ## Exports (Phase 5)
 
 All Export and Download controls produce real files in the browser. PDF reports (Company Intelligence Brief, Preliminary CIM Review, Red Team Report, IC Memo) are built with jsPDF and carry the MCM Intelligence header, generation time, data status, a status column on every table (Confirmed, Inferred, Estimated, Unknown, Risk), sources and page references, and a review disclaimer on every page. Excel workbooks (Target Discovery, Diligence Tracker, Financial Extraction, Risk Register, Evidence Register) are built with SheetJS and include a Provenance sheet. Exporting never upgrades a status: an estimate stays Estimated in the file.
+
+## QA checklist (Phase 6)
+
+Automated here: production build; undefined-identifier lint over app, services, utils and API; server-side render of all 18 routes; client fallback contract (no key, network failure, timeout, schema mismatch, upstream error) with a mocked network; endpoint validation paths for documents (type, corrupt, encrypted, oversized, page limit); PDF and XLSX generation.
+
+Manual, with `ANTHROPIC_API_KEY` set:
+1. Precision MedTech: Ask Intelligence with a free-text question (Live tag); Run full analysis (Live banner); re-run and Compare with previous; Push questions to diligence; Brief PDF; Evidence XLSX.
+2. Thesis Builder: edit the rationale, Analyze thesis and score universe, Save thesis version, Open priority targets (scores tagged Live in Target Discovery), Export XLSX.
+3. Red Team: Run, disposition each finding, Push questions to diligence, Export report PDF.
+4. CIM Analyzer: Analyze new document with `public/samples/falcon-cim-synthetic.pdf` (Uploaded chip, clickable pages), then the August operating report (conflict cards), resolve a conflict, Push to diligence, Export review PDF, Financials XLSX.
+5. Due Diligence: new questions present with status and owner controls; Tracker XLSX; Risk register XLSX.
+6. IC Memo: Generate memo, Refresh memo, Compare versions, Export draft PDF.
+7. MCM Knowledge: search "customer concentration in medical molding"; supporting records show provenance labels.
+8. Agent Activity: AI call log shows each task with model and latency; audit trail lists the human actions above; Reset demo workspace with confirmation.
+
+Manual, with the key removed (redeploy): the pill reads Demo mode; every action above still completes with the synthetic content; the document upload button is disabled with a visible reason; no control errors or shows raw failures.

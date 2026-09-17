@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { askIntelligence, useAiMode, probeAiStatus, getAiModel } from "./services/aiClient.js";
+import { askIntelligence, analyzeCompany, analyzeThesis, runRedTeam, useAiMode, probeAiStatus, getAiModel, getAiLog } from "./services/aiClient.js";
+import { WorkspaceProvider, useWorkspace } from "./services/storage.jsx";
 import {
   LayoutGrid, Lightbulb, Radar, Building2, Network, Send, Kanban, FileText, ClipboardCheck,
   ShieldAlert, FileSignature, Briefcase, TrendingUp, BookOpen, Library, Activity, FlaskConical,
@@ -577,7 +578,7 @@ function AskPanel({ ctx, onClose }) {
     setThread((t) => [...t, { role: "user", q }]);
     setBusy(true);
     const res = await askIntelligence({ question: q, context: buildAskContext(ctx) }, { fallback: () => askAnswer(q, ctx) });
-    const a = res.source === "live" ? { conclusion: res.data.conclusion, reasoning: res.data.reasoning, evidence: res.data.evidence, uncertainty: res.data.uncertainty, next: res.data.next_action, insufficient: res.data.enough_evidence === false } : res.data;
+    const a = res.source === "live" ? { conclusion: res.data.conclusion, reasoning: res.data.reasoning, evidence: res.data.enough_evidence === false ? res.data.evidence.slice(0, 2) : res.data.evidence, uncertainty: res.data.uncertainty, next: res.data.next_action, insufficient: res.data.enough_evidence === false } : res.data;
     setThread((t) => [...t, { role: "ai", a, q, source: res.source, error: res.error || null, meta: res.meta }]);
     setBusy(false);
   };
@@ -636,6 +637,9 @@ function Toast({ msg }) {
 
 /* ---------- Command Center ---------- */
 function CommandCenter({ go, openCompany, setStageFilter }) {
+  const { ws } = useWorkspace();
+  const auditEvents = ws.audit.slice(0, 4).map((e) => ({ agent: e.actor, text: `${e.action}${e.subject ? `: ${e.subject}` : ""}`, time: new Date(e.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), icon: e.kind === "human" ? Users : e.kind === "ai" ? Bot : Activity, kind: e.kind }));
+  const events = [...auditEvents, ...AGENT_EVENTS].slice(0, 6);
   const funnel = [["Universe", 1284], ["Screened", 428], ["Qualified", 143], ["Priority", 37], ["Contacted", 21], ["Dialogue", 12], ["Diligence", 3], ["IC", 1]];
   const attention = [
     { p: "critical", t: "Project Falcon", d: "Customer concentration increased from 31% to 44% in the latest data-room update.", action: () => go("diligence"), cta: "Open diligence" },
@@ -719,11 +723,11 @@ function CommandCenter({ go, openCompany, setStageFilter }) {
           </table>
         </Card>
         <Card>
-          <SectionTitle right={<span style={{ color: T.muted, fontSize: 11 }}>Updated 08:42</span>}>Activity</SectionTitle>
+          <SectionTitle right={<span style={{ color: T.muted, fontSize: 11 }}>{ws.audit.length ? "Session and demo events" : "Demo events"}</span>}>Activity</SectionTitle>
           <div className="space-y-3">
-            {AGENT_EVENTS.map((e, i) => (
+            {events.map((e, i) => (
               <div key={i} className="flex gap-3">
-                <div className="mt-0.5 w-7 h-7 flex items-center justify-center shrink-0" style={{ background: T.accentSoft, color: T.accent, borderRadius: 9 }}><e.icon size={13} strokeWidth={1.7} /></div>
+                <div className="mt-0.5 w-7 h-7 flex items-center justify-center shrink-0" style={{ background: e.kind === "human" ? T.greenSoft : T.accentSoft, color: e.kind === "human" ? T.green : T.accent, borderRadius: 9 }}><e.icon size={13} strokeWidth={1.7} /></div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between"><span className="font-medium" style={{ color: T.text, fontSize: 12.5 }}>{e.agent}</span><span className="tabular-nums" style={{ color: T.muted, fontSize: 11 }}>{e.time}</span></div>
                   <div style={{ color: T.muted, fontSize: 12 }}>{e.text}</div>
@@ -739,90 +743,131 @@ function CommandCenter({ go, openCompany, setStageFilter }) {
 }
 
 /* ---------- Thesis Builder ---------- */
-function ThesisBuilder({ go, setThesisCtx }) {
-  const [phase, setPhase] = useState("idle");
-  const [step, setStep] = useState(0);
-  const agents = ["Market Research Agent", "Industry Classification Agent", "Company Discovery Agent", "Qualification Agent"];
-  const [caps, setCaps] = useState({ "Injection molding": true, "Precision machining": true, "Specialty polymers": true, "Cleanroom manufacturing": true });
-  const run = () => {
-    setPhase("running"); setStep(0);
-    agents.forEach((_, i) => setTimeout(() => setStep(i + 1), 600 * (i + 1)));
-    setTimeout(() => setPhase("done"), 600 * agents.length + 400);
+function demoThesisAnalysis(form) {
+  return {
+    thesis_summary: `${form.name}: ${form.rationale.split(".")[0]}.`,
+    why_attractive: ["Outsourcing of validated component manufacturing continues to grow as OEMs concentrate on design and regulatory work.", "Certified suppliers with process validation history are rarely switched mid-program.", "Fragmented supplier base with many founder-owned businesses approaching transition."],
+    what_could_invalidate: ["OEM insourcing of high-volume programs.", "Pricing pressure from larger contract manufacturers consolidating the space.", "Commodity molders mis-classified as precision suppliers inflate the universe."],
+    screening_criteria: ["Revenue $8M-$50M and EBITDA $1.5M-$6M", "Manufacturing gross margin above 30%", "Certified, validated processes (ISO 13485 or equivalent)", "Founder or family ownership"],
+    risk_exclusions: form.exclusions,
+    diligence_questions: ["What share of revenue is under multi-year program agreements?", "How many qualified programs were lost in the last three years and why?", "What is the certification and validation renewal calendar?"],
+    market_signals: ["OEM capex announcements in diagnostics and drug delivery.", "Reshoring of component supply from Asia.", "Hiring activity at competing precision molders."],
+    research_plan: ["Build the universe from certification registries and trade directories", "Score each company against the criteria", "Prioritize founder-owned businesses with recent expansion or succession signals"],
+    important_assumptions: ["Screening financials are external estimates until company data is received", "Certification status is current"],
+    confidence: "medium",
+    company_scores: COMPANIES.map((c) => ({ id: c.id, fit: c.fit, rationale: c.signal, confidence: c.conf.toLowerCase() })),
   };
-  const Field = ({ label, children }) => (
-    <div className="mb-3"><div className="text-xs font-medium mb-1" style={{ color: T.muted }}>{label}</div>{children}</div>
-  );
-  const Input = ({ v, multi }) => multi
-    ? <textarea defaultValue={v} rows={4} className="w-full text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200" style={{ border: `1px solid ${T.border}`, color: T.text, borderRadius: R.ctl, transition: EASE }} />
-    : <input defaultValue={v} className="w-full text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200" style={{ border: `1px solid ${T.border}`, color: T.text, borderRadius: R.ctl, transition: EASE }} />;
+}
+function ThesisBuilder({ go, setThesisCtx }) {
+  const { ws, saveThesisVersion, setLiveScores, audit } = useWorkspace();
+  const [form, setForm] = useState({
+    name: "Medical Device Precision Components",
+    rationale: "Medical device OEMs continue to outsource highly engineered polymer and machined components to certified specialists. Suppliers with ISO 13485 certification, validated processes and tight-tolerance capability enjoy multi-year program lock-in and switching costs. Many are founder-owned, technically excellent and commercially under-developed, which matches MCM's value-creation playbook.",
+    endMarkets: "Medical Device, Life Sciences", type: "Niche Manufacturer", revMin: "$8M", revMax: "$50M", ebMin: "$1.5M", ebMax: "$6M", gm: "30%+", geo: "United States",
+    required: ["Highly engineered components", "Mission-critical applications", "Strong switching costs", "Recurring customer relationships"],
+    exclusions: ["Extreme customer concentration", "Commodity manufacturing", "Declining end markets", "Weak margins"],
+  });
+  const [caps, setCaps] = useState({ "Injection molding": true, "Precision machining": true, "Specialty polymers": true, "Cleanroom manufacturing": true });
+  const [phase, setPhase] = useState("idle");
+  const [result, setResult] = useState(null);
+  const [source, setSource] = useState("demo");
+  const [meta, setMeta] = useState(null);
+  const [liveErr, setLiveErr] = useState(null);
+  const [savedId, setSavedId] = useState(null);
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const thesisText = () => `Name: ${form.name}\nRationale: ${form.rationale}\nEnd markets: ${form.endMarkets}. Company type: ${form.type}. Revenue ${form.revMin}-${form.revMax}. EBITDA ${form.ebMin}-${form.ebMax}. Gross margin ${form.gm}. Geography ${form.geo}.\nCapabilities: ${Object.keys(caps).filter((k) => caps[k]).join(", ")}.\nRequired characteristics: ${form.required.join("; ")}.\nRisk exclusions: ${form.exclusions.join("; ")}.\n${thesisContextText(form.name)}`;
+  const universeText = () => COMPANIES.map((c) => `- id=${c.id} | ${c.name} | ${c.sector} | ${c.loc} | ${c.own} | revenue ${money(c.rev)} (est.) | EBITDA ${money(c.ebitda)} (est.) | GM ${pct(c.gm)} (est.) | employees ~${c.emp} | signal: ${c.signal} | screening risk: ${c.risk} | relationship: ${c.rel}`).join("\n");
+  const run = async () => {
+    setPhase("running"); setLiveErr(null); setSavedId(null);
+    audit({ actor: "M. Ahmed", kind: "human", action: "Analyzed thesis", subject: form.name });
+    const res = await analyzeThesis({ thesis: thesisText(), universe: universeText() }, { fallback: () => demoThesisAnalysis(form) });
+    setResult(res.data); setSource(res.source); setMeta(res.meta); setLiveErr(res.error || null); setPhase("done");
+    audit({ actor: res.source === "live" ? "Claude analysis" : "Demo analysis", kind: res.source === "live" ? "ai" : "system", action: `Thesis analysis ${res.source === "live" ? "completed" : "loaded (fallback)"}`, subject: form.name, detail: `${res.data.company_scores.length} companies scored` });
+  };
+  const scores = result ? result.company_scores.filter((s) => COMPANIES.some((c) => c.id === s.id)) : [];
+  const matches = scores.filter((s) => s.fit >= 75).length, priority = scores.filter((s) => s.fit >= 85).length;
+  const save = () => {
+    const id = saveThesisVersion({ name: form.name, source, input: { ...form, caps }, result });
+    setSavedId(id);
+    audit({ actor: "M. Ahmed", kind: "human", action: "Saved thesis version", subject: `${form.name} ${id}` });
+  };
+  const openTargets = () => {
+    const map = {}; scores.forEach((s) => { map[s.id] = { fit: s.fit, rationale: s.rationale, confidence: s.confidence, thesis: form.name, source, versionId: savedId }; });
+    setLiveScores(map);
+    setThesisCtx && setThesisCtx(form.name);
+    go("discovery");
+  };
+  const Field = ({ label, children }) => <div className="mb-3"><div className="text-xs font-medium mb-1" style={{ color: T.muted }}>{label}</div>{children}</div>;
+  const inp = { className: "w-full text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200", style: { border: `1px solid ${T.border}`, color: T.text, borderRadius: R.ctl, transition: EASE } };
   const Chips = ({ items, color }) => <div className="flex flex-wrap gap-1.5">{items.map((i) => <span key={i} className="text-xs px-2 py-0.5 rounded" style={{ background: color === "red" ? T.redSoft : T.accentSoft, color: color === "red" ? T.red : T.accent }}>{i}</span>)}</div>;
+  const sections = result ? [["Why this market may be attractive", result.why_attractive], ["What could invalidate the thesis", result.what_could_invalidate], ["Key screening criteria", result.screening_criteria], ["Risk exclusions", result.risk_exclusions], ["Key diligence questions", result.diligence_questions], ["Market signals to monitor", result.market_signals], ["Research plan", result.research_plan], ["Important assumptions", result.important_assumptions]] : [];
   return (
     <div>
-      <PageHeader title="Investment Thesis Builder" sub="Translate MCM investment strategy into a researchable, testable sourcing thesis." crumbs={["Sourcing", "Thesis Builder"]} demo="Synthetic thesis" />
+      <PageHeader title="Investment Thesis Builder" sub="Translate MCM investment strategy into a researchable, testable sourcing thesis." crumbs={["Sourcing", "Thesis Builder"]} demo="Synthetic universe" />
       <div className="grid grid-cols-5 gap-4">
         <Card className="col-span-2">
-          <Field label="Thesis name"><Input v="Medical Device Precision Components" /></Field>
-          <Field label="Investment rationale"><Input multi v="Medical device OEMs continue to outsource highly engineered polymer and machined components to certified specialists. Suppliers with ISO 13485 certification, validated processes and tight-tolerance capability enjoy multi-year program lock-in and switching costs. Many are founder-owned, technically excellent and commercially under-developed, which matches MCM's value-creation playbook." /></Field>
+          <Field label="Thesis name"><input value={form.name} onChange={set("name")} {...inp} /></Field>
+          <Field label="Investment rationale"><textarea value={form.rationale} onChange={set("rationale")} rows={5} {...inp} /></Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="End markets"><Chips items={["Medical Device", "Life Sciences"]} /></Field>
-            <Field label="Company type"><Input v="Niche Manufacturer" /></Field>
-            <Field label="Revenue"><div className="flex gap-2"><Input v="$8M min" /><Input v="$50M max" /></div></Field>
-            <Field label="EBITDA"><div className="flex gap-2"><Input v="$1.5M min" /><Input v="$6M max" /></div></Field>
-            <Field label="Gross margin"><Input v="30%+" /></Field>
-            <Field label="Geography"><Input v="United States" /></Field>
+            <Field label="End markets"><input value={form.endMarkets} onChange={set("endMarkets")} {...inp} /></Field>
+            <Field label="Company type"><input value={form.type} onChange={set("type")} {...inp} /></Field>
+            <Field label="Revenue"><div className="flex gap-2"><input value={form.revMin} onChange={set("revMin")} {...inp} /><input value={form.revMax} onChange={set("revMax")} {...inp} /></div></Field>
+            <Field label="EBITDA"><div className="flex gap-2"><input value={form.ebMin} onChange={set("ebMin")} {...inp} /><input value={form.ebMax} onChange={set("ebMax")} {...inp} /></div></Field>
+            <Field label="Gross margin"><input value={form.gm} onChange={set("gm")} {...inp} /></Field>
+            <Field label="Geography"><input value={form.geo} onChange={set("geo")} {...inp} /></Field>
           </div>
           <Field label="Capabilities">
             <div className="flex flex-wrap gap-2">{Object.keys(caps).map((c) => <label key={c} className="flex items-center gap-1.5 text-sm" style={{ color: T.text }}><input type="checkbox" checked={caps[c]} onChange={() => setCaps({ ...caps, [c]: !caps[c] })} /> {c}</label>)}</div>
           </Field>
-          <Field label="Required characteristics"><Chips items={["Highly engineered components", "Mission-critical applications", "Strong switching costs", "Recurring customer relationships"]} /></Field>
-          <Field label="Risk exclusions"><Chips color="red" items={["Extreme customer concentration", "Commodity manufacturing", "Declining end markets", "Weak margins"]} /></Field>
-          <Btn primary icon={Play} onClick={run} disabled={phase === "running"}>Generate Market Map</Btn>
+          <Field label="Required characteristics"><Chips items={form.required} /></Field>
+          <Field label="Risk exclusions"><Chips color="red" items={form.exclusions} /></Field>
+          <div className="flex items-center gap-2">
+            <Btn primary icon={phase === "running" ? Loader2 : Play} onClick={run} disabled={phase === "running"}>{phase === "running" ? "Analyzing thesis" : result ? "Re-analyze thesis" : "Analyze thesis and score universe"}</Btn>
+          </div>
+          {ws.thesisVersions.length > 0 && (
+            <div className="mt-4 pt-3" style={{ borderTop: `1px solid ${T.border}` }}>
+              <div className="text-xs font-medium mb-1" style={{ color: T.muted }}>Saved versions this session</div>
+              {ws.thesisVersions.map((v) => <button key={v.id} onClick={() => { setForm({ ...form, ...v.input }); setCaps(v.input.caps || caps); setResult(v.result); setSource(v.source); setPhase("done"); setSavedId(v.id); }} className="w-full text-left flex items-center justify-between py-1.5 hover:bg-stone-50 rounded-lg px-1" style={{ fontSize: 12 }}><span style={{ color: T.text }}><span className="tabular-nums font-medium">{v.id}</span> · {v.name}</span><span style={{ color: T.muted }}>{new Date(v.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · {v.source}</span></button>)}
+            </div>
+          )}
         </Card>
         <div className="col-span-3 space-y-4">
           {phase === "idle" && (
             <Card className="flex flex-col items-center justify-center py-12 text-center">
               <Radar size={28} style={{ color: T.muted }} />
-              <div className="text-sm font-medium mt-3" style={{ color: T.text }}>No market map generated yet</div>
-              <div className="text-xs mt-1 max-w-sm" style={{ color: T.muted }}>Generate a market map to estimate the addressable universe, qualify companies against the criteria on the left, and produce a thesis summary with sources.</div>
+              <div className="text-sm font-medium mt-3" style={{ color: T.text }}>No analysis yet</div>
+              <div className="text-xs mt-1 max-w-sm" style={{ color: T.muted }}>Analyze the thesis to evaluate its logic, then score every company in the synthetic universe against it. Results flow into Target Discovery.</div>
             </Card>
           )}
-          {phase === "running" && (
-            <Card>
-              <SectionTitle>Agents working</SectionTitle>
-              <div className="space-y-2">
-                {agents.map((a, i) => (
-                  <div key={a} className="flex items-center gap-2 text-sm" style={{ color: step > i ? T.text : T.muted }}>
-                    {step > i ? <CheckCircle2 size={15} style={{ color: T.green }} /> : step === i ? <Loader2 size={15} className="animate-spin" style={{ color: T.accent }} /> : <span className="w-[15px] h-[15px] rounded-full" style={{ border: `1px solid ${T.border}` }} />}
-                    {a}
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 space-y-2"><Skeleton /><Skeleton w="80%" /><Skeleton w="60%" /></div>
-            </Card>
-          )}
-          {phase === "done" && (
+          {phase === "running" && <Card><ProcessingStages stages={["Reading thesis criteria", "Evaluating market logic", "Scoring the synthetic universe", "Preparing research plan"]} label="Analyzing thesis..." /><div className="mt-4 space-y-2"><Skeleton /><Skeleton w="80%" /><Skeleton w="60%" /></div></Card>}
+          {phase === "done" && result && (
             <>
+              <LiveBanner source={source} error={liveErr} onRetry={run} meta={meta} />
               <div className="grid grid-cols-3 gap-3">
-                {[["Estimated addressable company universe", 327], ["Potential MCM matches", 48], ["High-priority targets", 12]].map(([k, v]) => (
+                {[["Companies in synthetic universe", COMPANIES.length], ["Potential MCM matches (fit 75+)", matches], ["High-priority targets (fit 85+)", priority]].map(([k, v]) => (
                   <Card key={k}><div className="text-xs" style={{ color: T.muted }}>{k}</div><div className="text-xl font-semibold tabular-nums mt-0.5" style={{ color: T.text }}>{v}</div></Card>
                 ))}
               </div>
               <Card>
-                <SectionTitle right={<div className="flex items-center gap-3 text-xs"><span style={{ color: T.muted }}>Confidence <b style={{ color: T.green }}>82%</b></span><span style={{ color: T.muted }}>12 public sources reviewed</span></div>}>Investment thesis summary</SectionTitle>
+                <SectionTitle right={<span className="text-xs" style={{ color: T.muted }}>Confidence <b style={{ color: result.confidence === "high" ? T.green : T.amber }}>{result.confidence}</b></span>}>Thesis analysis</SectionTitle>
+                <p className="text-sm mb-3" style={{ color: T.text, lineHeight: 1.6 }}>{result.thesis_summary}</p>
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  {[
-                    ["Why this market may be attractive", ["Outsourcing of validated component manufacturing continues to grow as OEMs concentrate on design and regulatory work.", "Certified suppliers with process validation history are rarely switched mid-program.", "Fragmented supplier base with many founder-owned businesses approaching transition."]],
-                    ["What could make the thesis wrong", ["OEM insourcing of high-volume programs.", "Pricing pressure from larger contract manufacturers consolidating the space.", "Commodity molders mis-classified as precision suppliers inflate the universe."]],
-                    ["Key diligence questions", ["What share of revenue is under multi-year program agreements?", "How many qualified programs were lost in the last three years and why?", "What is the certification and validation renewal calendar?"]],
-                    ["Market signals to monitor", ["OEM capex announcements in diagnostics and drug delivery.", "Reshoring of component supply from Asia.", "Hiring activity at competing precision molders."]],
-                  ].map(([h, items]) => (
+                  {sections.map(([h, items]) => (
                     <div key={h}>
                       <div className="text-xs font-medium mb-1" style={{ color: T.accent }}>{h}</div>
-                      <ul className="list-disc pl-4 space-y-1" style={{ color: T.text }}>{items.map((i) => <li key={i}>{i}</li>)}</ul>
+                      <ul className="list-disc pl-4 space-y-1" style={{ color: T.text, fontSize: 13 }}>{(items || []).map((i, n) => <li key={n}>{i}</li>)}</ul>
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 flex gap-2"><Btn primary icon={Radar} onClick={() => { setThesisCtx && setThesisCtx("Medical Device Precision Components"); go("discovery"); }}>Open the 12 priority targets in Target Discovery</Btn><Btn>Save thesis version</Btn></div>
+              </Card>
+              <Card pad={false}>
+                <div className="px-4 pt-4"><SectionTitle right={<span className="text-xs" style={{ color: T.muted }}>Scored against this thesis</span>}>Company scores</SectionTitle></div>
+                <table className="w-full text-xs"><thead><tr style={{ color: T.muted }}>{["Company", "Fit", "Confidence", "Rationale"].map((h) => <th key={h} className="text-left font-medium px-4 py-1.5" style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
+                  <tbody>{[...scores].sort((a, b2) => b2.fit - a.fit).map((s) => { const c = COMPANIES.find((x) => x.id === s.id); return <tr key={s.id} style={{ borderBottom: `1px solid ${T.border}` }}><td className="px-4 py-1.5 font-medium" style={{ color: T.text }}>{c.name}<span className="ml-2" style={{ color: T.muted, fontWeight: 400 }}>{c.sector}</span></td><td className="px-4 py-1.5"><FitBadge v={s.fit} /></td><td className="px-4 py-1.5"><Conf v={s.confidence[0].toUpperCase() + s.confidence.slice(1)} /></td><td className="px-4 py-1.5" style={{ color: T.muted }}>{s.rationale}</td></tr>; })}</tbody></table>
+                <div className="px-4 py-3 flex gap-2" style={{ borderTop: `1px solid ${T.border}` }}>
+                  <Btn primary icon={Radar} onClick={openTargets}>Open {priority} priority targets in Target Discovery</Btn>
+                  <Btn onClick={save} disabled={Boolean(savedId)}>{savedId ? `Saved as ${savedId}` : "Save thesis version"}</Btn>
+                </div>
               </Card>
             </>
           )}
@@ -834,6 +879,9 @@ function ThesisBuilder({ go, setThesisCtx }) {
 
 /* ---------- Target Discovery ---------- */
 function TargetDiscovery({ openCompany, stageFilter, companiesMode, thesisCtx, clearCtx }) {
+  const { ws } = useWorkspace();
+  const live = ws.liveScores || {};
+  const scored = (c) => (live[c.id] ? { ...c, fit: live[c.id].fit, liveScore: live[c.id] } : c);
   const [q, setQ] = useState("");
   const [thesis, setThesis] = useState(thesisCtx || "All");
   const [sector, setSector] = useState("All");
@@ -845,11 +893,11 @@ function TargetDiscovery({ openCompany, stageFilter, companiesMode, thesisCtx, c
   useEffect(() => { const t = setTimeout(() => setLoading(false), 450); return () => clearTimeout(t); }, []);
   useEffect(() => { if (thesisCtx) setThesis(thesisCtx); }, [thesisCtx]);
   const rows = useMemo(() => {
-    let r = COMPANIES.filter((c) => (thesis === "All" || c.thesis === thesis) && (sector === "All" || c.sector === sector) && c.fit >= minFit && (own === "All" || c.own === own) && (c.name + c.loc + c.signal).toLowerCase().includes(q.toLowerCase()));
+    let r = COMPANIES.map(scored).filter((c) => (thesis === "All" || c.thesis === thesis || Boolean(live[c.id])) && (sector === "All" || c.sector === sector) && c.fit >= minFit && (own === "All" || c.own === own) && (c.name + c.loc + c.signal).toLowerCase().includes(q.toLowerCase()));
     if (stageFilter === "Priority") r = r.filter((c) => c.fit >= 85);
     if (stageFilter === "Contacted" || stageFilter === "Active Dialogue") r = r.filter((c) => c.rel !== "No relationship");
     return [...r].sort((a, b) => (a[sort.k] > b[sort.k] ? 1 : -1) * sort.d);
-  }, [q, thesis, sector, minFit, own, sort, stageFilter]);
+  }, [q, thesis, sector, minFit, own, sort, stageFilter, ws.liveScores]);
   const Sel = ({ label, v, set, opts }) => (
     <select value={v} onChange={(e) => set(e.target.value)} className="bg-white" style={{ fontSize: 13, padding: "6px 10px", borderRadius: R.chip, border: `1px solid ${T.border}`, color: v === "All" ? T.muted : T.text }}>{opts.map((o) => <option key={o}>{o === "All" ? label : o}</option>)}</select>
   );
@@ -864,7 +912,7 @@ function TargetDiscovery({ openCompany, stageFilter, companiesMode, thesisCtx, c
       <PageHeader title={companiesMode ? "Companies" : "Target Discovery"} sub={companiesMode ? "All monitored companies in the demo universe." : "Identify and qualify targets against active investment theses."} crumbs={["Sourcing", companiesMode ? "Companies" : "Target Discovery"]} demo="12 synthetic companies" />
       {(thesisCtx || (stageFilter && stageFilter !== "Universe")) && !companiesMode && (
         <div className="flex items-center justify-between px-4 py-2" style={{ background: T.accentSoft, color: T.accent, borderRadius: 10, marginBottom: 16, fontSize: 12 }}>
-          <span className="flex items-center gap-2"><Lightbulb size={12} />{thesisCtx ? `Showing targets researched under the ${thesisCtx} thesis` : `Pipeline stage: ${stageFilter}`}</span>
+          <span className="flex items-center gap-2"><Lightbulb size={12} />{thesisCtx ? `Showing targets scored under the ${thesisCtx} thesis${Object.keys(live).length ? ` (${Object.values(live)[0].source === "live" ? "live" : "demo"} scores from the latest analysis)` : ""}` : `Pipeline stage: ${stageFilter}`}</span>
           <button onClick={() => { setThesis("All"); clearCtx && clearCtx(); }} className="underline">Show all</button>
         </div>
       )}
@@ -909,7 +957,7 @@ function TargetDiscovery({ openCompany, stageFilter, companiesMode, thesisCtx, c
                     <td className="px-4 py-2.5" style={{ borderBottom: `1px solid ${T.border}` }}><Num>{money(c.rev)}</Num></td>
                     <td className="px-4 py-2.5" style={{ borderBottom: `1px solid ${T.border}` }}><Num>{money(c.ebitda)}</Num></td>
                     <td className="px-4 py-2.5" style={{ borderBottom: `1px solid ${T.border}` }}><Num color={c.gm < 30 && !c.sector.includes("Distribution") ? T.amber : undefined}>{pct(c.gm)}</Num></td>
-                    <td className="px-4 py-2.5" style={{ borderBottom: `1px solid ${T.border}` }}><FitBadge v={c.fit} /></td>
+                    <td className="px-4 py-2.5" style={{ borderBottom: `1px solid ${T.border}` }}><FitBadge v={c.fit} />{c.liveScore && <div title={c.liveScore.rationale} style={{ fontSize: 10.5, color: c.liveScore.source === "live" ? T.green : T.unknown, marginTop: 2 }}>{c.liveScore.source === "live" ? "Live score" : "Thesis score"}</div>}</td>
                     <td className="px-4 py-2.5" style={{ borderBottom: `1px solid ${T.border}` }}><Conf v={c.conf} /></td>
                     <td className="px-4 py-2.5 whitespace-nowrap" style={{ borderBottom: `1px solid ${T.border}`, color: c.rel === "No relationship" ? T.unknown : T.text, fontSize: 12.5 }}>{c.rel}</td>
                     <td className="px-4 py-2.5" style={{ borderBottom: `1px solid ${T.border}`, color: T.muted, fontSize: 12.5 }}><span className="flex items-center justify-between gap-2">{c.signal}<ChevronRight size={12} className="opacity-0 group-hover:opacity-100 shrink-0" style={{ color: T.accent }} /></span></td>
@@ -928,16 +976,114 @@ function TargetDiscovery({ openCompany, stageFilter, companiesMode, thesisCtx, c
   );
 }
 
+/* ---------- Company analysis: demo fallback + context builders ---------- */
+const DIM_LABELS = [["financial_fit", "Financial fit"], ["strategic_fit", "Strategic fit"], ["technical_differentiation", "Technical differentiation"], ["end_market_fit", "End market"], ["ownership_fit", "Ownership"], ["commercial_opportunity", "Commercial opportunity"], ["risk_profile", "Risk profile"]];
+function demoCompanyAnalysis(c) {
+  const isPMS = c.id === "pms";
+  const base = { financial_fit: 95, strategic_fit: 94, technical_differentiation: 89, end_market_fit: 92, ownership_fit: 90, commercial_opportunity: 88, risk_profile: 76 };
+  const shift = c.fit - 91;
+  const dims = Object.fromEntries(Object.entries(base).map(([k, v]) => [k, Math.max(40, Math.min(99, v + shift))]));
+  return {
+    summary: isPMS ? "Precision MedTech Solutions appears to represent a strong fit with MCM's medical and highly engineered component strategy. The company manufactures tight-tolerance polymer and machined components for diagnostic and drug-delivery OEMs, holds an active ISO 13485 certificate, and expanded its Cleveland facility in 2024. Estimated financials sit inside MCM's range with gross margin above the 30% manufacturing threshold. The founder retains full ownership and recently discussed succession, which may indicate openness to a partner. The open questions are customer concentration, management depth and current capacity utilization. None is a confirmed negative; each requires a management conversation." : `${c.name} screens as a ${c.fit >= 85 ? "priority" : "potential"} target under the ${c.thesis} thesis. Estimated revenue of ${money(c.rev)} and EBITDA of ${money(c.ebitda)} are within MCM's published range and gross margin is ${pct(c.gm)}. The primary signal is ${c.signal.toLowerCase()}; the primary open risk is ${c.risk.toLowerCase()}. Estimates are external until company data is received.`,
+    confidence: c.conf.toLowerCase(),
+    recommendation: c.fit >= 85 ? "prioritize" : c.fit >= 75 ? "research_further" : "monitor",
+    fit_dimensions: dims,
+    supports_thesis: [
+      { text: "Revenue within $8M-$50M", status: "estimated", confidence: "medium", source: money(c.rev) },
+      { text: "EBITDA within $1.5M-$6M", status: "estimated", confidence: "medium", source: money(c.ebitda) },
+      { text: c.gm >= 30 ? "Gross margin above 30%" : "Gross margin near threshold", status: "estimated", confidence: "medium", source: pct(c.gm) },
+      ...(isPMS ? [
+        { text: "Medical end market", status: "confirmed", confidence: "high", source: "Diagnostics, drug delivery" },
+        { text: "Highly engineered components", status: "confirmed", confidence: "high", source: "Tolerances to 0.0005 in" },
+        { text: "Founder ownership", status: "confirmed", confidence: "high", source: "100%" },
+        { text: "Mission-critical applications", status: "confirmed", confidence: "high", source: "Instrument components" },
+        { text: "Commercial expansion potential", status: "inferred", confidence: "medium", source: "VP Sales hired 2025" },
+      ] : [
+        { text: `${c.sector} end market`, status: "confirmed", confidence: "high", source: "Screening record" },
+        { text: `${c.own} business`, status: "confirmed", confidence: "high", source: "Screening record" },
+        { text: c.signal, status: "inferred", confidence: "medium", source: "Primary signal" },
+      ]),
+    ],
+    risks: isPMS ? [{ text: "Largest customer estimated at 28%-35% of revenue", status: "inferred", confidence: "medium", severity: "medium", source: "Job postings, shipment pattern; threshold 40%" }] : [{ text: c.risk, status: "inferred", confidence: "low", severity: "medium", source: "Screening record" }],
+    unknowns: isPMS ? [{ text: "Management succession plan", how_to_resolve: "Ask founder" }, { text: "Capacity utilization", how_to_resolve: "Site visit" }, { text: "Historical EBITDA", how_to_resolve: "Company financials" }] : [{ text: "Historical financials", how_to_resolve: "Request teaser or company data" }, { text: "Management depth", how_to_resolve: "First meeting" }],
+    next_actions: isPMS ? ["Identify a warm introduction path to the founder", "Ask about customer concentration directly in the first conversation", "Request a site visit to assess capacity"] : ["Confirm financial estimates with company data", "Identify the decision maker and a warm path"],
+  };
+}
+function fitFromDims(d) { const ks = Object.keys(d); return Math.round(ks.reduce((s, k) => s + (Number(d[k]) || 0), 0) / ks.length); }
+function companyContextText(c) {
+  return `${c.name}. Sector: ${c.sector}. Location: ${c.loc}. Ownership: ${c.own}. Employees ~${c.emp}. Screening estimates from external models (not company data): revenue ${money(c.rev)}, EBITDA ${money(c.ebitda)}, gross margin ${pct(c.gm)}. Relationship: ${c.rel}. Primary signal: ${c.signal}. Primary open risk flagged at screening: ${c.risk}.${c.id === "pms" ? " Certifications: ISO 13485 active (expiry 2027). Founded 2004; facility expansion 2024; VP Sales hired 2025; founder discussed succession at a 2026 industry panel." : ""}`;
+}
+function thesisContextText(name) {
+  return `${name}. MCM acquisition criteria: revenue $8M-$50M; EBITDA $1.5M-$6M; manufacturing gross margin 30%+ (value-added distribution 20%+); US; majority/control investments in entrepreneurially led companies. Attractive characteristics: highly engineered or mission-critical components, defensible technical capability, high switching costs, strong customer relationships, opportunity to improve business development. Screening rules: customer concentration above 40% without a multi-year agreement is a risk; commodity manufacturing, declining end markets and weak margins are exclusions. Missing data is a gap, never a risk.`;
+}
+function evidenceContextText(c) {
+  return c.id === "pms" ? EVIDENCE.map((e) => `- ${e.claim} [${e.level}; confidence ${e.conf}; sources: ${e.src.length ? e.src.join("; ") : "none"}]`).join("\n") : "- No evidence items collected yet beyond the screening facts.";
+}
+const RECO_LABEL = { prioritize: "Prioritize", research_further: "Research further", monitor: "Monitor", pass: "Pass" };
+const STAGES_COMPANY = ["Reviewing thesis criteria", "Checking known evidence", "Evaluating strategic fit", "Identifying unresolved questions", "Preparing recommendation"];
+
+function ProcessingStages({ stages, label }) {
+  const [i, setI] = useState(0);
+  useEffect(() => { const t = setInterval(() => setI((x) => Math.min(x + 1, stages.length - 1)), 1400); return () => clearInterval(t); }, [stages.length]);
+  return (
+    <div className="p-4" style={{ background: T.accentSoft, borderRadius: 12 }}>
+      <div className="flex items-center gap-2" style={{ fontSize: 13, fontWeight: 600, color: T.accent }}><Loader2 size={14} className="animate-spin" /> {label}</div>
+      <div className="mt-2 space-y-1">{stages.map((s, j) => <div key={s} className="flex items-center gap-2" style={{ fontSize: 12, color: j < i ? T.green : j === i ? T.text : T.muted }}>{j < i ? <CheckCircle2 size={12} /> : <span className="w-3 h-3 rounded-full inline-block" style={{ border: `1px solid ${j === i ? T.accent : T.border}` }} />}{s}</div>)}</div>
+      <div className="mt-2" style={{ fontSize: 11, color: T.muted }}>One structured request. Stages describe the work, not separate agents.</div>
+    </div>
+  );
+}
+function LiveBanner({ source, error, onRetry, meta }) {
+  if (error) {
+    return (
+      <div className="flex items-center justify-between gap-2 px-3 py-2 mb-3" style={{ background: T.amberSoft, color: T.amber, borderRadius: 10, fontSize: 12 }}>
+        <span>{error} Showing the synthetic demonstration analysis instead.</span>
+        {onRetry ? <button onClick={onRetry} className="underline shrink-0">Retry live analysis</button> : null}
+      </div>
+    );
+  }
+  if (source === "live") {
+    const lat = meta && meta.latencyMs ? ` · ${(meta.latencyMs / 1000).toFixed(1)}s` : "";
+    const mod = meta && meta.model ? ` · ${meta.model}` : "";
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 mb-3" style={{ background: T.greenSoft, color: T.green, borderRadius: 10, fontSize: 12 }}>
+        <span className="w-1.5 h-1.5 rounded-full" style={{ background: T.green }} />Live analysis{mod}{lat}
+      </div>
+    );
+  }
+  return null;
+}
+
 /* ---------- Company Intelligence ---------- */
 function CompanyIntelligence({ company, go, notify, openThesis }) {
   const c = company;
   const [tab, setTab] = useState("Overview");
+  const { ws, setAnalysis, audit } = useWorkspace();
+  const stored = ws.analyses[c.id];
   const [running, setRunning] = useState(false);
-  const [ran, setRan] = useState(false);
+  const [liveErr, setLiveErr] = useState(null);
+  const [compare, setCompare] = useState(false);
   const [open, setOpen] = useState(null);
   const [decision, setDecision] = useState(null);
-  const run = () => { setRunning(true); setTimeout(() => { setRunning(false); setRan(true); notify("Analysis refreshed. 8 evidence items re-verified."); }, 1600); };
-  const breakdown = [["Financial fit", 95], ["Strategic fit", 94], ["Technical differentiation", 89], ["End market", 92], ["Ownership", 90], ["Commercial opportunity", 88], ["Risk profile", 76]];
+  const ran = Boolean(stored);
+  const analysis = stored?.current?.data || demoCompanyAnalysis(c);
+  const analysisSource = stored?.current?.source || "demo";
+  const analysisMeta = stored?.current?.meta || null;
+  const previous = stored?.previous?.data || null;
+  const fit = stored ? fitFromDims(analysis.fit_dimensions) : c.fit;
+  const confLabel = stored ? analysis.confidence[0].toUpperCase() + analysis.confidence.slice(1) : c.conf;
+  const recoLabel = stored ? RECO_LABEL[analysis.recommendation] : c.fit >= 85 ? "Prioritize" : c.fit >= 75 ? "Research" : "Monitor";
+  const run = async () => {
+    setRunning(true); setLiveErr(null);
+    audit({ actor: "M. Ahmed", kind: "human", action: "Ran company analysis", subject: c.name });
+    const res = await analyzeCompany({ company: companyContextText(c), thesis: thesisContextText(c.thesis), evidence: evidenceContextText(c) }, { fallback: () => demoCompanyAnalysis(c) });
+    setAnalysis(c.id, { data: res.data, source: res.source, meta: res.meta, at: new Date().toISOString() });
+    audit({ actor: res.source === "live" ? "Claude analysis" : "Demo analysis", kind: res.source === "live" ? "ai" : "system", action: `Company analysis ${res.source === "live" ? "completed" : "loaded (fallback)"}`, subject: c.name, detail: `Fit ${fitFromDims(res.data.fit_dimensions)}, ${RECO_LABEL[res.data.recommendation]}` });
+    setLiveErr(res.error || null);
+    setRunning(false);
+    notify(res.source === "live" ? "Live analysis complete." : "Analysis loaded.");
+  };
+  const breakdown = DIM_LABELS.map(([k, l]) => [l, analysis.fit_dimensions[k] ?? 0, previous ? previous.fit_dimensions[k] ?? null : null]);
   const isPMS = c.id === "pms";
   const tabs = ["Overview", "Investment Fit", "Financials", "Market", "People", "Relationship", "Evidence", "Agent Analysis"];
   const Fact = ({ k, v, level }) => (
@@ -986,10 +1132,11 @@ function CompanyIntelligence({ company, go, notify, openThesis }) {
           <div className="col-span-5 p-5 flex items-stretch gap-5">
             <div className="flex-1">
               <div className="text-xs" style={{ color: T.muted }}>MCM fit score</div>
-              <div className="flex items-baseline gap-1"><span className="text-3xl font-semibold tabular-nums leading-none" style={{ color: c.fit >= 90 ? T.green : T.accent }}>{c.fit}</span><span className="text-xs" style={{ color: T.muted }}>/ 100</span></div>
+              <div className="flex items-baseline gap-1"><span className="text-3xl font-semibold tabular-nums leading-none" style={{ color: fit >= 90 ? T.green : T.accent }}>{fit}</span><span className="text-xs" style={{ color: T.muted }}>/ 100</span>{previous && <span className="text-xs tabular-nums ml-1" style={{ color: fit - fitFromDims(previous.fit_dimensions) >= 0 ? T.green : T.amber }}>{fit - fitFromDims(previous.fit_dimensions) >= 0 ? "+" : ""}{fit - fitFromDims(previous.fit_dimensions)} vs previous</span>}</div>
               <div className="flex items-center gap-3 mt-2 text-xs">
-                <span className="flex flex-col"><span style={{ color: T.muted }}>Confidence</span><Conf v={c.conf} /></span>
-                <span className="flex flex-col"><span style={{ color: T.muted }}>Recommendation</span><span className="font-semibold" style={{ color: c.fit >= 85 ? T.green : T.accent }}>{c.fit >= 85 ? "Prioritize" : c.fit >= 75 ? "Research" : "Monitor"}</span></span>
+                <span className="flex flex-col"><span style={{ color: T.muted }}>Confidence</span><Conf v={confLabel} /></span>
+                <span className="flex flex-col"><span style={{ color: T.muted }}>Recommendation</span><span className="font-semibold" style={{ color: fit >= 85 ? T.green : T.accent }}>{recoLabel}</span></span>
+                <span className="flex flex-col"><span style={{ color: T.muted }}>Basis</span><span style={{ fontSize: 11, padding: "1px 7px", borderRadius: 999, background: analysisSource === "live" ? T.greenSoft : T.unknownSoft, color: analysisSource === "live" ? T.green : T.unknown }}>{analysisSource === "live" ? "Live analysis" : ran ? "Demo analysis" : "Screening"}</span></span>
               </div>
             </div>
             <div className="w-60 p-3.5 flex flex-col justify-between" style={{ background: T.soft, borderRadius: 12 }}>
@@ -1001,7 +1148,8 @@ function CompanyIntelligence({ company, go, notify, openThesis }) {
               <div className="flex flex-col gap-1">
                 <Btn primary onClick={() => { setDecision("Promote to Priority"); notify("Promoted to Priority. Relationship Agent will prepare introduction paths."); }}>Promote to Priority</Btn>
                 <div className="flex gap-1"><Btn small onClick={() => { setDecision("Analyst review requested"); notify("Review request sent to deal team."); }}>Request review</Btn><Btn small onClick={() => { setDecision("Pass"); notify("Marked Pass. Reason required in CRM (conceptual)."); }}>Pass</Btn></div>
-                <Btn small icon={running ? Loader2 : Play} onClick={run} disabled={running}>{running ? "Refreshing" : ran ? "Re-run analysis" : "Run full analysis"}</Btn>
+                <Btn small icon={running ? Loader2 : Play} onClick={run} disabled={running}>{running ? "Analyzing company" : ran ? "Re-run analysis" : "Run full analysis"}</Btn>
+                {previous && <Btn small icon={GitCompare} onClick={() => setCompare(!compare)}>{compare ? "Hide comparison" : "Compare with previous"}</Btn>}
               </div>
             </div>
           </div>
@@ -1010,7 +1158,71 @@ function CompanyIntelligence({ company, go, notify, openThesis }) {
       <Card pad={false}>
         <div className="px-5 pt-4"><Tabs tabs={tabs} value={tab} onChange={setTab} /></div>
         <div className="p-5">
+          {tab === "Overview" && running && <div style={{ marginBottom: 16 }}><ProcessingStages stages={STAGES_COMPANY} label="Analyzing company..." /></div>}
+          {tab === "Overview" && !running && ran && <LiveBanner source={analysisSource} error={liveErr} onRetry={run} meta={analysisMeta} />}
+          {tab === "Overview" && compare && previous && (
+            <Card bordered style={{ marginBottom: 16, boxShadow: "none" }}>
+              <SectionTitle right={<span style={{ fontSize: 11, color: T.muted }}>Previous run: {stored.previous.source === "live" ? "live" : "demo"} · Current: {analysisSource}</span>}>Previous vs current analysis</SectionTitle>
+              <table className="w-full text-xs"><thead><tr style={{ color: T.muted }}><th className="text-left font-medium py-1">Dimension</th><th className="text-right font-medium py-1">Previous</th><th className="text-right font-medium py-1">Current</th><th className="text-right font-medium py-1">Change</th></tr></thead>
+                <tbody>{breakdown.map(([l, v, pv]) => <tr key={l} style={{ borderBottom: `1px solid ${T.border}` }}><td className="py-1" style={{ color: T.text }}>{l}</td><td className="py-1 text-right tabular-nums" style={{ color: T.muted }}>{pv}</td><td className="py-1 text-right tabular-nums font-medium">{v}</td><td className="py-1 text-right tabular-nums" style={{ color: v - pv > 0 ? T.green : v - pv < 0 ? T.amber : T.muted }}>{v - pv > 0 ? "+" : ""}{v - pv}</td></tr>)}
+                <tr><td className="py-1 font-medium">Recommendation</td><td className="py-1 text-right" style={{ color: T.muted }}>{RECO_LABEL[previous.recommendation]}</td><td className="py-1 text-right font-medium">{RECO_LABEL[analysis.recommendation]}</td><td /></tr></tbody></table>
+              <div className="grid grid-cols-2 gap-4 mt-3 text-xs"><div><div style={{ color: T.muted, marginBottom: 2 }}>Previous summary</div><p style={{ color: T.muted, lineHeight: 1.5 }}>{previous.summary}</p></div><div><div style={{ color: T.muted, marginBottom: 2 }}>Current summary</div><p style={{ color: T.text, lineHeight: 1.5 }}>{analysis.summary}</p></div></div>
+            </Card>
+          )}
           {tab === "Overview" && (
+            <div className="grid grid-cols-12 gap-4" style={{ opacity: running ? 0.55 : 1, transition: EASE }}>
+              <div className="col-span-8 space-y-3">
+                <div>
+                  <div className="text-xs font-medium mb-1" style={{ color: T.muted }}>{ran ? "Analysis summary" : "Screening summary"}</div>
+                  <p className="text-sm leading-relaxed" style={{ color: T.text, maxWidth: 720 }}>
+                    {analysis.summary}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-xs font-medium mb-1 flex items-center justify-between" style={{ color: T.text }}><span>Supports the thesis</span><span style={{ color: T.muted }}>{analysis.supports_thesis.length} items</span></div>
+                    <table className="w-full text-xs">
+                      <tbody>{analysis.supports_thesis.map((s) => (
+                        <tr key={s.text} style={{ borderBottom: `1px solid ${T.border}` }}><td className="py-1 pr-2" style={{ color: T.text }}>{s.text}</td><td className="py-1 text-right tabular-nums" style={{ color: T.muted }}>{s.source && s.source !== "none" ? s.source : ""}</td><td className="py-1 pl-2 text-right"><Level level={LEVEL[s.status] ? s.status : "inferred"} small /></td></tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                  <div>
+                    <div className="text-xs font-medium mb-1 flex items-center justify-between" style={{ color: T.text }}><span>Risks and unresolved items</span><span style={{ color: T.muted }}>{analysis.risks.length} risk{analysis.risks.length === 1 ? "" : "s"}, {analysis.unknowns.length} gap{analysis.unknowns.length === 1 ? "" : "s"}</span></div>
+                    <table className="w-full text-xs">
+                      <tbody>
+                        {analysis.risks.map((r) => <tr key={r.text} style={{ borderBottom: `1px solid ${T.border}`, background: T.redSoft }}><td className="py-1 px-1.5" style={{ color: T.red }}>{r.text}</td><td className="py-1 text-right tabular-nums" style={{ color: T.red }}>{r.severity ? `${r.severity[0].toUpperCase()}${r.severity.slice(1)} severity` : ""}</td><td className="py-1 pl-2 pr-1.5 text-right"><Level level="risk" small /></td></tr>)}
+                        {analysis.risks.length === 0 && <tr><td className="py-1 px-1.5" colSpan={3} style={{ color: T.muted }}>No adverse evidence identified.</td></tr>}
+                        {analysis.unknowns.map((u) => (
+                          <tr key={u.text} style={{ borderBottom: `1px dashed ${T.unknown}88` }}><td className="py-1 px-1.5" style={{ color: T.unknown }}>{u.text}</td><td className="py-1 text-right" style={{ color: T.unknown }}>Resolve: {u.how_to_resolve}</td><td className="py-1 pl-2 pr-1.5 text-right"><Level level="unknown" small /></td></tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="text-xs mt-1.5" style={{ color: T.muted }}>Gaps reduce confidence, not the score. Only confirmed adverse findings reduce the score.</div>
+                  </div>
+                </div>
+                {ran && analysis.next_actions?.length > 0 && <div><div className="text-xs font-medium mb-1" style={{ color: T.accent }}>Recommended next actions</div><ol className="list-decimal pl-4 text-xs space-y-0.5" style={{ color: T.text }}>{analysis.next_actions.map((a) => <li key={a}>{a}</li>)}</ol></div>}
+              </div>
+              <div className="col-span-4" style={{ borderLeft: `1px solid ${T.border}`, paddingLeft: 12 }}>
+                <div className="text-xs font-medium mb-1" style={{ color: T.muted }}>Fit score components</div>
+                <div style={{ height: 190 }}>
+                  <ResponsiveContainer>
+                    <RadarChart data={breakdown.map(([k, v]) => ({ k, v }))} outerRadius={70}>
+                      <PolarGrid stroke={T.border} />
+                      <PolarAngleAxis dataKey="k" tick={{ fontSize: 9, fill: T.muted }} />
+                      <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+                      <RRadar dataKey="v" stroke={T.accent} fill={T.accent} fillOpacity={0.14} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+                <table className="w-full text-xs">
+                  <tbody>{breakdown.map(([k, v]) => <tr key={k} style={{ borderBottom: `1px solid ${T.border}` }}><td className="py-0.5" style={{ color: T.muted }}>{k}</td><td className="py-0.5 w-20"><div className="h-1 rounded-lg" style={{ background: T.unknownSoft }}><div className="h-1 rounded-lg" style={{ width: `${v}%`, background: v >= 85 ? T.green : v >= 75 ? T.accent : T.amber }} /></div></td><td className="py-0.5 text-right tabular-nums font-medium w-8" style={{ color: v < 80 ? T.amber : T.text }}>{v}</td></tr>)}</tbody>
+                </table>
+                <div className="text-xs mt-1.5" style={{ color: T.muted }}>{ran ? "Scores from the latest analysis run." : "Risk profile is held down by the unconfirmed customer concentration."}</div>
+              </div>
+            </div>
+          )}
+          {false && (
             <div className="grid grid-cols-12 gap-4">
               <div className="col-span-8 space-y-3">
                 <div>
@@ -1481,16 +1693,43 @@ function CIMAnalyzer({ go, notify }) {
 }
 
 /* ---------- Red Team ---------- */
+const DEMO_RED_TEAM = {
+  findings: [
+    { assumption: "Aerospace growth will remain strong.", challenge: "67% of projected growth depends on two programs. A delay on either removes most of the plan's upside.", evidence: ["CIM p. 58", "Market Research #14"], test_performed: "18-month slip on one program reduces FY2028 revenue from $53M to $46M.", severity: "medium", confidence: "medium", finding_type: "unresolved_uncertainty", required_resolution: "Build a downside case with an 18-month slip on either program." },
+    { assumption: "Customer relationships are highly durable.", challenge: "Top customer is 31% of sales; the agreement expires within 24 months of an expected close. Renewal pricing is not disclosed.", evidence: ["CIM p. 48", "Contract summary (data room)"], test_performed: "Prior renewals: no pricing history in CIM. Requested from management.", severity: "high", confidence: "high", finding_type: "adverse_evidence", required_resolution: "Obtain Customer A renewal terms and pricing history." },
+    { assumption: "EBITDA adjustments are reasonable.", challenge: "$740K of adjusted EBITDA relates to items that may recur; relocation costs appeared in two of the last three years.", evidence: ["CIM p. 71", "Quality of earnings draft"], test_performed: "FY2023 and FY2024 adjustments include $180K and $210K of similar items.", severity: "high", confidence: "high", finding_type: "adverse_evidence", required_resolution: "Reconcile each adjustment against FY2023 and FY2024 in the QoE." },
+  ],
+  overall_assessment: "Investable, but three items require resolution before a binding offer",
+  critical_management_questions: ["What are Customer A's renewal terms, and has pricing been renegotiated in prior renewals?", "Which of the $740K adjustments recurred in FY2023 or FY2024, and why?", "What is the downside case if one of the two growth programs slips by 18 months?"],
+  bull_case: [["FY2028 revenue", "$53M (12% CAGR)"], ["Adjusted EBITDA", "$5.1M, expanding with mix"], ["Customer A", "Long-standing, sole-source on qualified parts"], ["Growth programs", "Two platform ramps with public OEM backlog"], ["Valuation view", "Upper half of $42M to $48M range"], ["Exit thesis", "Strategic buyers value AS9100 capacity"]].map(([dimension, view]) => ({ dimension, view })),
+  bear_case: [["FY2028 revenue", "$44M to $46M (5% to 6% CAGR) if one program slips"], ["Adjusted EBITDA", "$4.4M if $740K adjustments recur"], ["Customer A", "31% share, renewal within 24 months, pricing undisclosed"], ["Growth programs", "67% of growth from two programs; schedule risk not modeled"], ["Valuation view", "Lower half of range, with earn-out on Customer A renewal"], ["Exit thesis", "Concentration discount likely persists at exit"]].map(([dimension, view]) => ({ dimension, view })),
+  gating_questions: ["Customer A renewal terms", "Recurrence of adjustments", "Program slip downside case"],
+  confidence: "high",
+};
+const FALCON_THESIS = "Falcon represents a high-quality precision manufacturer benefiting from durable aerospace demand and strong technical barriers.";
 function RedTeam({ go }) {
-  const [phase, setPhase] = useState("idle");
+  const { ws, setRedTeam, setDisposition, audit } = useWorkspace();
+  const deal = "Project Falcon";
+  const stored = ws.redTeam[deal] || null;
+  const [phase, setPhase] = useState(stored?.result ? "done" : "idle");
   const [compare, setCompare] = useState(false);
-  const [disp, setDisp] = useState({});
-  const run = () => { setPhase("running"); setTimeout(() => setPhase("done"), 1500); };
-  const A = [
-    { a: "Aerospace growth will remain strong.", ch: "67% of projected growth depends on two programs. A delay on either removes most of the plan's upside.", ev: ["CIM p. 58", "Market Research #14"], sev: "Medium", test: "18-month slip on one program reduces FY2028 revenue from $53M to $46M." },
-    { a: "Customer relationships are highly durable.", ch: "Top customer is 31% of sales; the agreement expires within 24 months of an expected close. Renewal pricing is not disclosed.", ev: ["CIM p. 48", "Contract summary (data room)"], sev: "High", test: "Prior renewals: no pricing history in CIM. Requested from management." },
-    { a: "EBITDA adjustments are reasonable.", ch: "$740K of adjusted EBITDA relates to items that may recur; relocation costs appeared in two of the last three years.", ev: ["CIM p. 71", "Quality of earnings draft"], sev: "High", test: "FY2023 and FY2024 adjustments include $180K and $210K of similar items." },
-  ];
+  const [liveErr, setLiveErr] = useState(null);
+  const result = stored?.result || null;
+  const source = stored?.source || "demo";
+  const meta = stored?.meta || null;
+  const disp = stored?.dispositions || {};
+  const run = async () => {
+    setPhase("running"); setLiveErr(null);
+    audit({ actor: "M. Ahmed", kind: "human", action: "Ran Red Team review", subject: deal });
+    const res = await runRedTeam({ thesis: FALCON_THESIS, context: DEAL_CONTEXT[deal] }, { fallback: () => DEMO_RED_TEAM });
+    setRedTeam(deal, { result: res.data, source: res.source, meta: res.meta, dispositions: {}, createdAt: new Date().toISOString() });
+    setLiveErr(res.error || null); setPhase("done");
+    audit({ actor: res.source === "live" ? "Claude Red Team" : "Demo Red Team", kind: res.source === "live" ? "ai" : "system", action: `Created ${res.data.findings.length} findings`, subject: deal, detail: res.data.overall_assessment });
+  };
+  const dispose = (i, d) => { setDisposition(deal, i, d); audit({ actor: "M. Ahmed", kind: "human", action: `Marked finding #${i + 1} ${d}`, subject: deal }); };
+  const A = result ? result.findings.map((f) => ({ a: f.assumption, ch: f.challenge, ev: f.evidence || [], sev: f.severity[0].toUpperCase() + f.severity.slice(1), test: f.test_performed, type: f.finding_type, resolve: f.required_resolution, conf: f.confidence })) : [];
+  const hi = A.filter((x) => x.sev === "High").length, med = A.filter((x) => x.sev === "Medium").length, lo = A.filter((x) => x.sev === "Low").length;
+  const TYPE_LABEL = { adverse_evidence: "Adverse evidence", unresolved_uncertainty: "Unresolved uncertainty", missing_information: "Missing information" };
   const bg = "#182231", panel = "#202C3D", line = "#2C3A4E", text = "#E6EAF0", mutedD = "#93A0B4", link = "#8FB6E3", warn = "#E07A6C", amberD = "#E0B36C", greenD = "#7FC59F";
   const DBtn = ({ children, onClick, active }) => <button onClick={onClick} style={{ fontSize: 11.5, padding: "4px 9px", borderRadius: 6, border: `1px solid ${active ? text : line}`, color: active ? bg : text, background: active ? text : "transparent" }}>{children}</button>;
   const disposed = Object.keys(disp).length;
@@ -1506,18 +1745,18 @@ function RedTeam({ go }) {
           <p style={{ color: mutedD, fontSize: 13, margin: "4px 0 0" }}>Independent challenge to the investment thesis. The reviewing agent is instructed to find contrary evidence, not to confirm the case.</p>
         </div>
         <div className="flex items-center gap-3">
-          {phase === "done" && <div className="text-right"><div style={{ fontSize: 20, fontWeight: 650, lineHeight: 1 }}>3 findings</div><div style={{ fontSize: 12, color: mutedD }}><span style={{ color: warn }}>2 High</span> · <span style={{ color: amberD }}>1 Medium</span></div></div>}
-          <span style={{ fontSize: 11, padding: "2px 7px", borderRadius: 4, background: panel, color: mutedD }}>Synthetic analysis</span>
-          {phase !== "done" && <button onClick={run} disabled={phase === "running"} className="flex items-center gap-1.5 font-medium disabled:opacity-60" style={{ fontSize: 13, padding: "6px 12px", borderRadius: 6, background: T.accent, color: "#fff" }}>{phase === "running" ? <Loader2 size={13} className="animate-spin" /> : <ShieldAlert size={13} />}{phase === "running" ? "Reviewing" : "Run Red Team review"}</button>}
+          {phase === "done" && <div className="text-right"><div style={{ fontSize: 20, fontWeight: 650, lineHeight: 1 }}>{A.length} findings</div><div style={{ fontSize: 12, color: mutedD }}><span style={{ color: warn }}>{hi} High</span> · <span style={{ color: amberD }}>{med} Medium</span>{lo ? <span> · {lo} Low</span> : null}</div></div>}
+          <span style={{ fontSize: 11, padding: "2px 9px", borderRadius: 999, background: source === "live" ? "rgba(127,197,159,0.15)" : panel, color: source === "live" ? greenD : mutedD }}>{source === "live" ? `Live review${meta?.latencyMs ? ` · ${(meta.latencyMs / 1000).toFixed(1)}s` : ""}` : "Synthetic analysis"}</span>
+          {phase !== "running" && <button onClick={run} disabled={phase === "running"} className="flex items-center gap-1.5 font-medium disabled:opacity-60" style={{ fontSize: 13, padding: "6px 12px", borderRadius: 6, background: T.accent, color: "#fff" }}>{phase === "running" ? <Loader2 size={13} className="animate-spin" /> : <ShieldAlert size={13} />}{phase === "running" ? "Reviewing" : phase === "done" ? "Re-run review" : "Run Red Team review"}</button>}
         </div>
       </div>
       <div className="grid grid-cols-12 gap-4" style={{ marginBottom: 24 }}>
         <div className="col-span-8 p-4" style={{ background: panel, borderRadius: 12 }}>
           <div style={{ color: mutedD, fontSize: 11, marginBottom: 4 }}>Thesis under review (IC memo draft v3)</div>
-          <p style={{ fontSize: 15, margin: 0, lineHeight: 1.5 }}>"Falcon represents a high-quality precision manufacturer benefiting from durable aerospace demand and strong technical barriers."</p>
+          <p style={{ fontSize: 15, margin: 0, lineHeight: 1.5 }}>"{FALCON_THESIS}"</p>
         </div>
         <div className="col-span-4 p-4 grid grid-cols-2 gap-x-4 gap-y-2" style={{ background: panel, borderRadius: 12, fontSize: 12 }}>
-          {[["Reviewer", "Red-Team Agent v2"], ["Scope", "CIM, data room, research"], ["Sources checked", "3 documents, 14 notes"], ["Deal team response", phase === "done" ? `${disposed} of 3 findings` : "Not started"]].map(([k, v]) => <div key={k}><div style={{ color: mutedD, fontSize: 11 }}>{k}</div><div>{v}</div></div>)}
+          {[["Reviewer", source === "live" ? "Claude Red Team review" : "Demo Red Team"], ["Scope", "CIM extraction, diligence status, open questions"], ["Method", "One adversarial structured request"], ["Deal team response", phase === "done" ? `${disposed} of ${A.length} findings` : "Not started"]].map(([k, v]) => <div key={k}><div style={{ color: mutedD, fontSize: 11 }}>{k}</div><div>{v}</div></div>)}
         </div>
       </div>
       {phase === "idle" && (
@@ -1531,39 +1770,39 @@ function RedTeam({ go }) {
           {["Extracting explicit and implicit assumptions from the thesis", "Searching CIM and data room for contrary evidence", "Testing EBITDA adjustments against FY2023 and FY2024", "Scoring severity and drafting verdict"].map((s) => <div key={s} className="flex items-center gap-2"><Loader2 size={13} className="animate-spin" style={{ color: mutedD }} /> {s}</div>)}
         </div>
       )}
-      {phase === "done" && (
+      {phase === "done" && liveErr && <div className="flex items-center justify-between gap-2 px-3 py-2" style={{ background: "rgba(224,179,108,0.14)", color: amberD, borderRadius: 10, fontSize: 12, marginBottom: 16 }}><span>{liveErr} Showing the synthetic demonstration review instead.</span><button onClick={run} className="underline">Retry live review</button></div>}
+      {phase === "done" && result && (
         <>
-          <div className="grid grid-cols-3 gap-4" style={{ marginBottom: 24 }}>
+          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(3, Math.max(1, A.length))}, minmax(0, 1fr))`, marginBottom: 24 }}>
             {A.map((x, i) => (
               <div key={i} className="p-4 flex flex-col" style={{ background: panel, borderRadius: 12, borderTop: `3px solid ${x.sev === "High" ? warn : amberD}` }}>
-                <div className="flex items-center justify-between" style={{ marginBottom: 8 }}><span className="tabular-nums" style={{ color: mutedD, fontSize: 11 }}>0{i + 1}</span><span style={{ fontSize: 11, fontWeight: 600, color: x.sev === "High" ? warn : amberD, letterSpacing: "0.06em" }}>{x.sev.toUpperCase()}</span></div>
+                <div className="flex items-center justify-between" style={{ marginBottom: 8 }}><span className="tabular-nums" style={{ color: mutedD, fontSize: 11 }}>0{i + 1} · {TYPE_LABEL[x.type] || ""}</span><span style={{ fontSize: 11, fontWeight: 600, color: x.sev === "High" ? warn : x.sev === "Medium" ? amberD : greenD, letterSpacing: "0.06em" }}>{x.sev.toUpperCase()}</span></div>
                 <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.35, marginBottom: 12 }}>{x.a}</div>
                 <div style={{ color: mutedD, fontSize: 11, marginBottom: 2 }}>Challenge</div>
                 <div style={{ fontSize: 13, lineHeight: 1.5, marginBottom: 10 }}>{x.ch}</div>
                 <div style={{ color: mutedD, fontSize: 11, marginBottom: 2 }}>Evidence</div>
                 <div className="flex gap-1.5 flex-wrap" style={{ marginBottom: 10 }}>{x.ev.map((e) => <span key={e} className="tabular-nums" style={{ fontSize: 11.5, padding: "2px 7px", borderRadius: 4, background: "rgba(143,182,227,0.12)", color: link }}>{e}</span>)}</div>
                 <div style={{ color: mutedD, fontSize: 11, marginBottom: 2 }}>Test</div>
-                <div style={{ fontSize: 12.5, color: mutedD, lineHeight: 1.5, marginBottom: 14 }}>{x.test}</div>
+                <div style={{ fontSize: 12.5, color: mutedD, lineHeight: 1.5, marginBottom: 8 }}>{x.test}</div>
+                <div style={{ color: mutedD, fontSize: 11, marginBottom: 2 }}>Required resolution</div>
+                <div style={{ fontSize: 12.5, color: text, lineHeight: 1.5, marginBottom: 14 }}>{x.resolve}</div>
                 <div className="mt-auto pt-3" style={{ borderTop: `1px solid ${line}` }}>
                   <div style={{ color: mutedD, fontSize: 11, marginBottom: 6 }}>Deal team disposition</div>
-                  <div className="flex flex-wrap gap-1.5">{["Requires resolution", "Accept risk", "Reject finding"].map((d) => <DBtn key={d} active={disp[i] === d} onClick={() => setDisp({ ...disp, [i]: d })}>{d}</DBtn>)}</div>
+                  <div className="flex flex-wrap gap-1.5">{["Requires resolution", "Accept risk", "Reject finding"].map((d) => <DBtn key={d} active={disp[i] === d} onClick={() => dispose(i, d)}>{d}</DBtn>)}</div>
                 </div>
               </div>
             ))}
           </div>
           <div className="grid grid-cols-12 gap-4" style={{ marginBottom: 24 }}>
             <div className="col-span-8 p-4" style={{ background: panel, borderRadius: 12 }}>
-              <div className="flex items-center justify-between" style={{ marginBottom: 4 }}><span style={{ color: mutedD, fontSize: 11 }}>Verdict</span><span style={{ color: mutedD, fontSize: 11 }}>Confidence 84%. Advisory only; the investment team decides.</span></div>
-              <div style={{ fontSize: 18, fontWeight: 650 }}>Investable, but three items require resolution before a binding offer</div>
+              <div className="flex items-center justify-between" style={{ marginBottom: 4 }}><span style={{ color: mutedD, fontSize: 11 }}>Verdict</span><span style={{ color: mutedD, fontSize: 11 }}>Confidence {result.confidence}. Advisory only; the investment team decides.</span></div>
+              <div style={{ fontSize: 18, fontWeight: 650 }}>{result.overall_assessment}</div>
               <div style={{ color: mutedD, fontSize: 11, margin: "12px 0 4px" }}>Critical questions for management</div>
-              <ol className="list-decimal pl-5 space-y-1" style={{ fontSize: 13 }}>
-                <li>What are Customer A's renewal terms, and has pricing been renegotiated in prior renewals?</li>
-                <li>Which of the $740K adjustments recurred in FY2023 or FY2024, and why?</li>
-                <li>What is the downside case if one of the two growth programs slips by 18 months?</li>
-              </ol>
+              <ol className="list-decimal pl-5 space-y-1" style={{ fontSize: 13 }}>{result.critical_management_questions.map((q2, n) => <li key={n}>{q2}</li>)}</ol>
+              {result.gating_questions?.length > 0 && <div style={{ marginTop: 10 }}><div style={{ color: mutedD, fontSize: 11, marginBottom: 4 }}>Gating questions</div><div className="flex flex-wrap gap-1.5">{result.gating_questions.map((g, n) => <span key={n} style={{ fontSize: 11.5, padding: "2px 8px", borderRadius: 999, background: "rgba(224,122,108,0.14)", color: warn }}>{g}</span>)}</div></div>}
             </div>
             <div className="col-span-4 p-4 flex flex-col justify-between" style={{ background: panel, borderRadius: 12 }}>
-              <div style={{ fontSize: 13, color: mutedD }}>{disposed < 3 ? `${3 - disposed} finding${3 - disposed > 1 ? "s" : ""} awaiting deal team disposition` : "All findings dispositioned"}</div>
+              <div style={{ fontSize: 13, color: mutedD }}>{disposed < A.length ? `${A.length - disposed} finding${A.length - disposed > 1 ? "s" : ""} awaiting deal team disposition` : "All findings dispositioned"}</div>
               <div className="flex flex-col gap-2 mt-4">
                 <button onClick={() => setCompare(!compare)} className="flex items-center justify-center gap-1.5 font-medium" style={{ fontSize: 13, padding: "7px 12px", borderRadius: 6, background: T.accent, color: "#fff" }}><GitCompare size={13} /> {compare ? "Hide bull vs bear" : "Compare bull vs bear case"}</button>
                 <button onClick={() => go("diligence")} className="flex items-center justify-center gap-1.5" style={{ fontSize: 13, padding: "7px 12px", borderRadius: 6, border: `1px solid ${line}`, color: text }}><ClipboardCheck size={13} /> Push questions to diligence</button>
@@ -1573,15 +1812,8 @@ function RedTeam({ go }) {
           {compare && (
             <div className="overflow-hidden" style={{ background: panel, borderRadius: 12 }}>
               <table className="w-full" style={{ fontSize: 13 }}>
-                <thead><tr><th className="text-left font-medium px-4 py-2.5" style={{ color: mutedD, borderBottom: `1px solid ${line}`, width: 170, fontSize: 11 }}>Dimension</th><th className="text-left font-medium px-4 py-2.5" style={{ color: greenD, borderBottom: `1px solid ${line}`, fontSize: 11 }}>Investment case</th><th className="text-left font-medium px-4 py-2.5" style={{ color: warn, borderBottom: `1px solid ${line}`, fontSize: 11 }}>Red Team case</th><th className="text-right font-medium px-4 py-2.5" style={{ color: mutedD, borderBottom: `1px solid ${line}`, fontSize: 11 }}>Delta</th></tr></thead>
-                <tbody>{[
-                  ["FY2028 revenue", "$53M (12% CAGR)", "$44M to $46M (5% to 6% CAGR) if one program slips", "-$7M to -$9M"],
-                  ["Adjusted EBITDA", "$5.1M, expanding with mix", "$4.4M if $740K adjustments recur", "-$0.7M"],
-                  ["Customer A", "Long-standing, sole-source on qualified parts", "31% share, renewal within 24 months, pricing undisclosed", "Unresolved"],
-                  ["Growth programs", "Two platform ramps with public OEM backlog", "67% of growth from two programs; schedule risk not modeled", "Unresolved"],
-                  ["Valuation view", "Upper half of $42M to $48M range", "Lower half of range, with earn-out on Customer A renewal", "-$3M to -$5M"],
-                  ["Exit thesis", "Strategic buyers value AS9100 capacity", "Concentration discount likely persists at exit", "0.5x to 1.0x multiple"],
-                ].map(([k, a2, b2, d]) => <tr key={k} style={{ borderBottom: `1px solid ${line}` }}><td className="px-4 py-2.5 font-medium" style={{ color: mutedD }}>{k}</td><td className="px-4 py-2.5">{a2}</td><td className="px-4 py-2.5">{b2}</td><td className="px-4 py-2.5 text-right tabular-nums" style={{ color: d.startsWith("-") ? warn : mutedD }}>{d}</td></tr>)}</tbody>
+                <thead><tr><th className="text-left font-medium px-4 py-2.5" style={{ color: mutedD, borderBottom: `1px solid ${line}`, width: 170, fontSize: 11 }}>Dimension</th><th className="text-left font-medium px-4 py-2.5" style={{ color: greenD, borderBottom: `1px solid ${line}`, fontSize: 11 }}>Investment case</th><th className="text-left font-medium px-4 py-2.5" style={{ color: warn, borderBottom: `1px solid ${line}`, fontSize: 11 }}>Red Team case</th><th className="text-right font-medium px-4 py-2.5" style={{ color: mutedD, borderBottom: `1px solid ${line}`, fontSize: 11 }}></th></tr></thead>
+                <tbody>{result.bull_case.map((bc, n) => { const be = result.bear_case[n] || result.bear_case.find((x) => x.dimension === bc.dimension) || { view: "" }; return <tr key={n} style={{ borderBottom: `1px solid ${line}` }}><td className="px-4 py-2.5 font-medium" style={{ color: mutedD }}>{bc.dimension}</td><td className="px-4 py-2.5">{bc.view}</td><td className="px-4 py-2.5">{be.view}</td><td className="px-4 py-2.5 text-right tabular-nums" style={{ color: mutedD }}>{n === 0 && source === "demo" ? "-$7M to -$9M" : ""}</td></tr>; })}</tbody>
               </table>
             </div>
           )}
@@ -1901,6 +2133,11 @@ function ResearchLibrary() {
 
 /* ---------- Agent Architecture ---------- */
 function AgentActivity() {
+  const { ws, reset } = useWorkspace();
+  const [log, setLog] = useState(getAiLog());
+  const [confirm, setConfirm] = useState(false);
+  useEffect(() => { const h = () => setLog(getAiLog()); window.addEventListener("mcm:ai-log", h); return () => window.removeEventListener("mcm:ai-log", h); }, []);
+  const mode = useAiMode();
   const agents = ["Research", "Qualification", "Market", "Financial", "CIM", "Diligence", "Red-Team", "Relationship", "Reporting"];
   const tools = [["CRM", Database], ["ZoomInfo", Users], ["Outlook", Mail], ["Websites", Globe], ["Research", Library], ["Data room", FolderLock], ["Reporting", BarChart3]];
   const routing = [["Industry classification", "Small", "Low complexity", "Low", "Fast"], ["Document extraction", "Small / local", "Structured extraction", "Low", "Fast"], ["Company research synthesis", "Advanced", "Multi-source reasoning", "Medium", "Medium"], ["CIM synthesis", "Advanced", "Complex reasoning", "High", "Slow"], ["Red-team analysis", "Advanced", "Adversarial reasoning", "High", "Slow"], ["Confidential data-room review", "Local", "Sensitive processing", "Low", "Medium"], ["Outreach personalization", "Advanced", "Tone and judgment", "Medium", "Medium"], ["Portfolio KPI monitoring", "Small", "Rule-based checks", "Low", "Fast"]];
@@ -1915,9 +2152,25 @@ function AgentActivity() {
   const cost = (c) => ({ Low: T.green, Medium: T.amber, High: T.red }[c]);
   return (
     <div>
-      <PageHeader title="Agent Architecture" sub="How work is orchestrated, which model handles each task, and where cost is controlled." crumbs={["System", "Agent Activity"]} demo="Conceptual architecture" />
+      <PageHeader title="Agent Activity and Architecture" sub="What has actually run this session, and the conceptual architecture the system is growing toward." crumbs={["System", "Agent Activity"]} demo="Conceptual architecture" right={<>{confirm ? <span className="flex items-center gap-2" style={{ fontSize: 12, color: T.muted }}>Restore the original synthetic dataset? Session analyses, versions and findings will be cleared. <Btn small danger onClick={() => { reset(); setLog([]); setConfirm(false); }}>Reset</Btn><Btn small onClick={() => setConfirm(false)}>Cancel</Btn></span> : <Btn small onClick={() => setConfirm(true)}>Reset demo workspace</Btn>}</>} />
+      <div className="grid gap-4" style={{ gridTemplateColumns: "3fr 2fr", marginBottom: 24 }}>
+        <Card pad={false}>
+          <div className="px-4 pt-4"><SectionTitle right={<span style={{ fontSize: 11, color: T.muted }}>{mode === "live" ? "Live AI" : "Demo mode"} · this session</span>}>AI calls this session</SectionTitle></div>
+          {log.length === 0 ? <div className="px-4 pb-4" style={{ fontSize: 13, color: T.muted }}>No live calls yet. Each structured request is recorded here with model, latency, tokens and status.</div> : (
+            <table className="w-full" style={{ fontSize: 12.5 }}><thead><tr style={{ color: T.muted, fontSize: 11 }}>{["Time", "Task", "Model", "Latency", "Tokens in / out", "Status"].map((h) => <th key={h} className="text-left font-medium px-4 py-1.5" style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
+              <tbody>{log.slice(0, 25).map((e) => <tr key={e.id} style={{ borderBottom: `1px solid ${T.border}` }}><td className="px-4 py-1.5 tabular-nums" style={{ color: T.muted }}>{e.timestamp ? new Date(e.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : ""}</td><td className="px-4 py-1.5" style={{ color: T.text }}>{e.task}</td><td className="px-4 py-1.5" style={{ color: T.muted }}>{e.model || ""}</td><td className="px-4 py-1.5 tabular-nums">{e.latencyMs ? `${(e.latencyMs / 1000).toFixed(1)}s` : ""}</td><td className="px-4 py-1.5 tabular-nums" style={{ color: T.muted }}>{e.usage ? `${e.usage.input} / ${e.usage.output}` : ""}</td><td className="px-4 py-1.5"><Pri p={e.status === "complete" ? "healthy" : e.status === "failed" ? "critical" : "review"} label={e.status === "failed" ? `Failed (${e.code})` : e.status} /></td></tr>)}</tbody></table>
+          )}
+        </Card>
+        <Card pad={false}>
+          <div className="px-4 pt-4"><SectionTitle>Audit trail</SectionTitle></div>
+          {ws.audit.length === 0 ? <div className="px-4 pb-4" style={{ fontSize: 13, color: T.muted }}>No session actions yet. Human decisions, AI analyses and system events are recorded here.</div> : (
+            <div className="px-4 pb-3">{ws.audit.slice(0, 12).map((e) => <div key={e.id} className="flex gap-3 py-2" style={{ borderBottom: `1px solid ${T.border}`, fontSize: 12.5 }}><span className="tabular-nums shrink-0" style={{ color: T.muted, width: 62 }}>{new Date(e.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span><span className="shrink-0" style={{ fontSize: 10.5, padding: "1px 6px", borderRadius: 999, height: 18, background: e.kind === "human" ? T.greenSoft : e.kind === "ai" ? T.accentSoft : T.unknownSoft, color: e.kind === "human" ? T.green : e.kind === "ai" ? T.accent : T.unknown }}>{e.kind === "human" ? "Human" : e.kind === "ai" ? "AI" : "System"}</span><span><span className="font-medium" style={{ color: T.text }}>{e.actor}</span> <span style={{ color: T.text }}>{e.action}</span>{e.subject ? <span style={{ color: T.muted }}> · {e.subject}</span> : null}{e.detail ? <div style={{ color: T.muted, fontSize: 11.5 }}>{e.detail}</div> : null}</span></div>)}</div>
+          )}
+        </Card>
+      </div>
       <div className="grid gap-4" style={{ gridTemplateColumns: "3fr 2fr" }}>
         <Card>
+          <div style={{ fontSize: 11, color: T.unknown, marginBottom: 4 }}>Future conceptual architecture. Today each analysis is one structured Claude request.</div>
           <div className="flex flex-col items-center py-2">
             <Node label="Orchestrator" dark />
             <VLine />
@@ -1987,7 +2240,7 @@ function Evaluations() {
 }
 
 /* ---------- App ---------- */
-export default function App() {
+function AppInner() {
   const [route, setRoute] = useState("home");
   const [companyId, setCompanyId] = useState("pms");
   const [collapsed, setCollapsed] = useState(false);
@@ -2047,5 +2300,13 @@ export default function App() {
       {ask && <AskPanel ctx={ctx} onClose={() => setAsk(false)} />}
       <Toast msg={toast} />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <WorkspaceProvider>
+      <AppInner />
+    </WorkspaceProvider>
   );
 }

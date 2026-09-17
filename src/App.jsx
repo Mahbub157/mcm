@@ -15,36 +15,70 @@ import {
 
 /* ---------- design tokens ---------- */
 const T = {
-  nav: "#101a2b",
-  navText: "#9fb0c8",
-  navActive: "#1c2a44",
-  accent: "#1d4a80",
-  accentSoft: "#e8eef6",
-  bg: "#f6f5f2",
-  border: "#e2e0da",
-  text: "#182131",
-  muted: "#66708a",
-  green: "#1b7a4a",
-  greenSoft: "#e6f4ec",
-  amber: "#a86a12",
-  amberSoft: "#fbf1dd",
-  red: "#b3261e",
-  redSoft: "#fbe9e7",
-  unknown: "#7b8497",
-  unknownSoft: "#eef0f3",
+  nav: "#0F1C2E",
+  navText: "#9AA8BC",
+  navActive: "#182840",
+  accent: "#245A91",
+  accentSoft: "#E9F0F7",
+  bg: "#F7F7F5",
+  soft: "#F1F3F5",
+  border: "#E4E6EA",
+  text: "#14202F",
+  muted: "#5F6B7A",
+  green: "#168457",
+  greenSoft: "#E6F3EC",
+  amber: "#B87716",
+  amberSoft: "#FBF2E2",
+  red: "#C0392B",
+  redSoft: "#FBEAE8",
+  unknown: "#7A8493",
+  unknownSoft: "#EEF0F3",
 };
-const FONT = { fontFamily: "Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" };
+const FONT = { fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, 'Segoe UI', system-ui, sans-serif" };
+const SHADOW = "0 1px 2px rgba(15,28,46,0.04), 0 6px 20px rgba(15,28,46,0.06)";
+const SHADOW_HOVER = "0 2px 4px rgba(15,28,46,0.05), 0 14px 34px rgba(15,28,46,0.10)";
+const EASE = "all 180ms cubic-bezier(.2,.8,.2,1)";
+const R = { card: 14, ctl: 10, chip: 999, hero: 18 };
+
+/* ---------- icon set (custom SVG, 24 grid, 1.75 stroke) ---------- */
+const Ico = ({ d, size = 18, style, fill, children }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={style} aria-hidden="true">{children}{d && <path d={d} />}</svg>
+);
+const I = {
+  home: (pr) => <Ico {...pr}><rect x="3.5" y="3.5" width="7" height="7" rx="2" /><rect x="13.5" y="3.5" width="7" height="7" rx="2" /><rect x="3.5" y="13.5" width="7" height="7" rx="2" /><rect x="13.5" y="13.5" width="7" height="7" rx="2" /></Ico>,
+  thesis: (pr) => <Ico {...pr}><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.3 1.1 2.2h5c.1-.9.5-1.7 1.1-2.2A6 6 0 0 0 12 3z" /></Ico>,
+  radar: (pr) => <Ico {...pr}><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4.5" /><path d="M12 3.5V7M12 17v3.5M3.5 12H7M17 12h3.5" /><circle cx="12" cy="12" r="1" fill="currentColor" /></Ico>,
+  building: (pr) => <Ico {...pr}><path d="M4.5 20.5V6.5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v14M15.5 10.5h2a2 2 0 0 1 2 2v8M3 20.5h18" /><path d="M8 8.5h2M8 12h2M8 15.5h2M12 8.5h.01M12 12h.01M12 15.5h.01" /></Ico>,
+  network: (pr) => <Ico {...pr}><circle cx="12" cy="5.5" r="2.5" /><circle cx="5.5" cy="17.5" r="2.5" /><circle cx="18.5" cy="17.5" r="2.5" /><path d="M10.7 7.6 7 15.3M13.3 7.6l3.7 7.7M8 17.5h8" /></Ico>,
+  send: (pr) => <Ico {...pr}><path d="M20.5 3.5 3.8 10.2a.8.8 0 0 0 .1 1.5l6.4 2 2 6.4a.8.8 0 0 0 1.5.1z" /><path d="M20.5 3.5 10.3 13.7" /></Ico>,
+  kanban: (pr) => <Ico {...pr}><rect x="3.5" y="4" width="5" height="16" rx="1.5" /><rect x="9.5" y="4" width="5" height="11" rx="1.5" /><rect x="15.5" y="4" width="5" height="7" rx="1.5" /></Ico>,
+  doc: (pr) => <Ico {...pr}><path d="M14 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5z" /><path d="M14 3.5V8.5h5M8.5 12.5h7M8.5 16h5" /></Ico>,
+  clipboard: (pr) => <Ico {...pr}><rect x="5" y="5" width="14" height="16" rx="2" /><path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M8.5 13.5l2.5 2.5 4.5-5" /></Ico>,
+  shield: (pr) => <Ico {...pr}><path d="M12 3.5 5 6v5.5c0 4.3 2.9 7.6 7 9 4.1-1.4 7-4.7 7-9V6z" /><path d="M12 8.5v4M12 15.5h.01" /></Ico>,
+  memo: (pr) => <Ico {...pr}><path d="M12 20.5h8.5M4 20.5l4.2-1 10-10a1.9 1.9 0 0 0-3.2-3.2l-10 10z" /><path d="M13.5 7.8l3.2 3.2" /></Ico>,
+  briefcase: (pr) => <Ico {...pr}><rect x="3.5" y="7.5" width="17" height="12" rx="2.5" /><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5M3.5 12.5h17" /></Ico>,
+  trend: (pr) => <Ico {...pr}><path d="M3.5 17.5 9 12l3.5 3.5 8-8" /><path d="M15.5 7.5h5v5" /></Ico>,
+  book: (pr) => <Ico {...pr}><path d="M4.5 5.5A2 2 0 0 1 6.5 3.5H19v14H6.5a2 2 0 0 0-2 2z" /><path d="M4.5 19.5a2 2 0 0 1 2-2H19v3H6.5a2 2 0 0 1-2-1z" /></Ico>,
+  library: (pr) => <Ico {...pr}><path d="M4 4.5h3v15H4zM9 4.5h3v15H9zM14.5 5.2l2.9-.8 3.7 14.4-2.9.8z" /></Ico>,
+  activity: (pr) => <Ico {...pr}><path d="M3.5 12h3.2l2.6-6 3.4 12 2.6-6h5.2" /></Ico>,
+  flask: (pr) => <Ico {...pr}><path d="M9.5 3.5h5M10 3.5v5.2L4.9 17.6A2 2 0 0 0 6.6 20.5h10.8a2 2 0 0 0 1.7-2.9L14 8.7V3.5" /><path d="M7.5 15h9" /></Ico>,
+  search: (pr) => <Ico {...pr}><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.3-4.3" /></Ico>,
+  bell: (pr) => <Ico {...pr}><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z" /><path d="M10 20.5a2 2 0 0 0 4 0" /></Ico>,
+  chat: (pr) => <Ico {...pr}><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5V16H6.5A2.5 2.5 0 0 1 4 13.5z" /><path d="M8.5 9h7M8.5 12h4" /></Ico>,
+  panelClose: (pr) => <Ico {...pr}><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" /><path d="M9 4.5v15M15.5 10l-2 2 2 2" /></Ico>,
+  panelOpen: (pr) => <Ico {...pr}><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" /><path d="M9 4.5v15M13.5 10l2 2-2 2" /></Ico>,
+};
 
 /* ---------- formatting ---------- */
 const money = (m) => (m == null ? "Unknown" : `$${m.toFixed(1)}M`);
 const pct = (p) => (p == null ? "Unknown" : `${p.toFixed(1)}%`);
 
 /* ---------- primitives ---------- */
-function Card({ children, className = "", style = {}, pad = true }) {
+function Card({ children, className = "", style = {}, pad = true, bordered }) {
   return (
     <div
-      className={`bg-white rounded-sm ${pad ? "p-3" : ""} ${className}`}
-      style={{ border: `1px solid ${T.border}`, ...style }}
+      className={`bg-white ${pad ? "p-4" : ""} ${className}`}
+      style={{ borderRadius: R.card, boxShadow: SHADOW, border: bordered ? `1px solid ${T.border}` : "none", transition: EASE, ...style }}
     >
       {children}
     </div>
@@ -52,15 +86,15 @@ function Card({ children, className = "", style = {}, pad = true }) {
 }
 function SectionTitle({ children, right }) {
   return (
-    <div className="flex items-center justify-between mb-2">
-      <h3 className="text-sm font-semibold" style={{ color: T.text }}>{children}</h3>
+    <div className="flex items-center justify-between mb-3">
+      <h3 style={{ color: T.text, fontSize: 15, fontWeight: 600, margin: 0 }}>{children}</h3>
       {right}
     </div>
   );
 }
-function Demo({ children = "Demo data" }) {
+function Demo({ children = "Synthetic demo" }) {
   return (
-    <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: T.unknownSoft, color: T.unknown }}>
+    <span style={{ fontSize: 11, padding: "2px 9px", borderRadius: R.chip, background: T.unknownSoft, color: T.unknown, whiteSpace: "nowrap" }}>
       {children}
     </span>
   );
@@ -76,8 +110,8 @@ function Level({ level, small }) {
   const L = LEVEL[level];
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-sm ${small ? "text-xs px-1.5 py-0" : "text-xs px-2 py-0.5"} font-medium`}
-      style={{ color: L.color, background: L.bg, border: `1px ${L.border} ${L.color}55` }}
+      className="inline-flex items-center gap-1 font-medium"
+      style={{ color: L.color, background: L.bg, border: `1px ${L.border} ${L.color}55`, fontSize: 11, padding: small ? "0 7px" : "2px 8px", borderRadius: R.chip }}
     >
       <L.Icon size={11} /> {L.label}
     </span>
@@ -89,29 +123,35 @@ function Legend({ levels = ["confirmed", "inferred", "estimated", "unknown", "ri
 function Num({ children, muted, color }) {
   return <span className="tabular-nums text-right block" style={{ color: color || (muted ? T.muted : T.text), fontVariantNumeric: "tabular-nums" }}>{children}</span>;
 }
+/* priority system: critical / review / active / healthy */
+const PRI = { critical: [T.red, T.redSoft, "Critical"], review: [T.amber, T.amberSoft, "Needs review"], active: [T.accent, T.accentSoft, "Active"], healthy: [T.green, T.greenSoft, "Healthy"] };
+function Pri({ p, label }) {
+  const [c, b, l] = PRI[p];
+  return <span className="inline-flex items-center gap-1.5 font-medium" style={{ color: c, background: b, fontSize: 11, padding: "2px 9px", borderRadius: R.chip }}><span className="w-1.5 h-1.5 rounded-full" style={{ background: c }} />{label || l}</span>;
+}
 function Conf({ v }) {
   const c = v === "High" ? T.green : v === "Medium" ? T.amber : T.unknown;
   return (
-    <span className="inline-flex items-center gap-1 text-xs font-medium" style={{ color: c }}>
+    <span className="inline-flex items-center gap-1 font-medium" style={{ color: c, fontSize: 12 }}>
       <span className="w-1.5 h-1.5 rounded-full" style={{ background: c }} /> {v}
     </span>
   );
 }
 function FitBadge({ v }) {
-  const s = v >= 90 ? { c: T.green, b: T.greenSoft, t: "Strong fit" } : v >= 75 ? { c: T.accent, b: T.accentSoft, t: "Potential fit" } : { c: T.unknown, b: T.unknownSoft, t: "Monitor" };
+  const s = v >= 90 ? { c: T.green, t: "Strong fit" } : v >= 75 ? { c: T.accent, t: "Potential fit" } : { c: T.unknown, t: "Monitor" };
   return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="text-sm font-semibold tabular-nums" style={{ color: s.c }}>{v}</span>
-      <span className="text-xs px-1.5 rounded" style={{ color: s.c, background: s.b }}>{s.t}</span>
+    <span className="inline-block" style={{ minWidth: 88 }}>
+      <span className="flex items-baseline gap-1.5"><span className="tabular-nums" style={{ color: s.c, fontSize: 16, fontWeight: 600, lineHeight: 1 }}>{v}</span><span style={{ color: T.muted, fontSize: 11 }}>{s.t}</span></span>
+      <span className="block mt-1 rounded" style={{ height: 3, background: T.soft }}><span className="block rounded" style={{ height: 3, width: `${v}%`, background: s.c }} /></span>
     </span>
   );
 }
 function Sev({ v }) {
   const m = { High: [T.red, T.redSoft], Medium: [T.amber, T.amberSoft], Low: [T.green, T.greenSoft] }[v];
-  return <span className="text-xs px-2 py-0.5 rounded font-medium" style={{ color: m[0], background: m[1] }}>{v}</span>;
+  return <span className="font-medium" style={{ color: m[0], background: m[1], fontSize: 11, padding: "2px 9px", borderRadius: R.chip }}>{v}</span>;
 }
 function Btn({ children, primary, ghost, onClick, icon: I, small, danger, disabled }) {
-  const base = small ? "text-xs px-2 py-0.5" : "text-xs px-2.5 py-1";
+  const base = small ? "px-2.5 py-1" : "px-3 py-1.5";
   const st = primary
     ? { background: T.accent, color: "#fff", border: `1px solid ${T.accent}` }
     : danger
@@ -123,36 +163,25 @@ function Btn({ children, primary, ghost, onClick, icon: I, small, danger, disabl
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center gap-1.5 rounded-sm font-medium ${base} hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50`}
-      style={st}
+      className={`inline-flex items-center gap-1.5 font-medium ${base} hover:opacity-90 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:opacity-50`}
+      style={{ ...st, fontSize: small ? 12 : 13, borderRadius: R.ctl, transition: EASE }}
     >
-      {I && <I size={13} />} {children}
+      {I && <I size={14} />} {children}
     </button>
   );
 }
 function Tabs({ tabs, value, onChange }) {
   return (
-    <div className="flex gap-0 border-b" style={{ borderColor: T.border }}>
+    <div className="inline-flex flex-wrap gap-0.5 p-1" style={{ background: T.soft, borderRadius: 12 }}>
       {tabs.map((t) => (
-        <button
-          key={t}
-          onClick={() => onChange(t)}
-          className="text-sm px-3 py-2 -mb-px"
-          style={{
-            color: value === t ? T.accent : T.muted,
-            borderBottom: value === t ? `2px solid ${T.accent}` : "2px solid transparent",
-            fontWeight: value === t ? 600 : 500,
-          }}
-        >
-          {t}
-        </button>
+        <button key={t} onClick={() => onChange(t)} className="px-3 py-1.5" style={{ fontSize: 13, borderRadius: 9, transition: EASE, color: value === t ? T.text : T.muted, background: value === t ? "#fff" : "transparent", boxShadow: value === t ? "0 1px 3px rgba(15,28,46,0.12)" : "none", fontWeight: value === t ? 600 : 500 }}>{t}</button>
       ))}
     </div>
   );
 }
 function KV({ k, v, level }) {
   return (
-    <div className="flex items-start justify-between py-1 text-xs" style={{ borderBottom: `1px solid ${T.border}` }}>
+    <div className="flex items-start justify-between py-1.5" style={{ borderBottom: `1px solid ${T.border}`, fontSize: 13 }}>
       <span style={{ color: T.muted }}>{k}</span>
       <span className="flex items-center gap-2 font-medium tabular-nums text-right" style={{ color: T.text }}>
         {v} {level && <Level level={level} small />}
@@ -161,27 +190,22 @@ function KV({ k, v, level }) {
   );
 }
 function Skeleton({ h = 12, w = "100%" }) {
-  return <div className="rounded animate-pulse" style={{ height: h, width: w, background: "#e9e8e3" }} />;
+  return <div className="rounded animate-pulse" style={{ height: h, width: w, background: "#e9eaed" }} />;
 }
 function Tip({ text, children }) {
   return (
     <span className="relative group inline-flex">
       {children}
-      <span
-        className="absolute z-30 hidden group-hover:block left-1/2 -translate-x-1/2 top-full mt-1 text-xs px-2 py-1 rounded whitespace-nowrap"
-        style={{ background: T.text, color: "#fff" }}
-      >
-        {text}
-      </span>
+      <span className="absolute z-30 hidden group-hover:block left-1/2 -translate-x-1/2 top-full mt-1 px-2 py-1 whitespace-nowrap" style={{ background: T.text, color: "#fff", fontSize: 11, borderRadius: 4 }}>{text}</span>
     </span>
   );
 }
 function Modal({ title, onClose, children, wide }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16" style={{ background: "rgba(16,26,43,0.45)" }} onClick={onClose}>
-      <div className={`bg-white rounded shadow-xl ${wide ? "w-[960px]" : "w-[640px]"} max-w-[95vw] max-h-[85vh] overflow-auto`} onClick={(e) => e.stopPropagation()} style={{ border: `1px solid ${T.border}` }}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16" style={{ background: "rgba(15,28,46,0.45)" }} onClick={onClose}>
+      <div className={`bg-white shadow-xl ${wide ? "w-[960px]" : "w-[640px]"} max-w-[95vw] max-h-[85vh] overflow-auto`} onClick={(e) => e.stopPropagation()} style={{ borderRadius: R.card }}>
         <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${T.border}` }}>
-          <div className="text-sm font-semibold" style={{ color: T.text }}>{title}</div>
+          <div className="font-semibold" style={{ color: T.text, fontSize: 14 }}>{title}</div>
           <button onClick={onClose} style={{ color: T.muted }}><X size={16} /></button>
         </div>
         <div className="p-4">{children}</div>
@@ -189,12 +213,12 @@ function Modal({ title, onClose, children, wide }) {
     </div>
   );
 }
-function PageHeader({ title, sub, crumbs = [], right }) {
+function PageHeader({ title, sub, crumbs = [], right, demo }) {
   return (
-    <div className="flex items-start justify-between mb-3">
+    <div className="flex items-start justify-between" style={{ marginBottom: 24 }}>
       <div>
         {crumbs.length > 0 && (
-          <div className="flex items-center gap-1 text-xs mb-1" style={{ color: T.muted }}>
+          <div className="flex items-center gap-1 mb-1" style={{ color: T.muted, fontSize: 12 }}>
             {crumbs.map((c, i) => (
               <React.Fragment key={i}>
                 {i > 0 && <ChevronRight size={12} />}
@@ -203,12 +227,23 @@ function PageHeader({ title, sub, crumbs = [], right }) {
             ))}
           </div>
         )}
-        <h1 className="text-lg font-semibold tracking-tight" style={{ color: T.text }}>{title}</h1>
-        {sub && <p className="text-sm mt-0.5" style={{ color: T.muted }}>{sub}</p>}
+        <div className="flex items-center gap-3">
+          <h1 style={{ color: T.text, fontSize: 24, fontWeight: 700, margin: 0, lineHeight: 1.2, letterSpacing: "-0.02em" }}>{title}</h1>
+          <Demo>{demo || "Synthetic demo"}</Demo>
+        </div>
+        {sub && <p style={{ color: T.muted, fontSize: 13, margin: "4px 0 0" }}>{sub}</p>}
       </div>
-      {right && <div className="flex items-center gap-2">{right}</div>}
+      {right && <div className="flex items-center gap-2 pt-1">{right}</div>}
     </div>
   );
+}
+function Metric({ k, v, color, secondary, sub }) {
+  return secondary
+    ? <div className="flex items-baseline justify-between py-2" style={{ borderBottom: `1px solid ${T.border}` }}><span style={{ color: T.muted, fontSize: 12 }}>{k}</span><span className="tabular-nums font-semibold" style={{ color: T.text, fontSize: 15 }}>{v}</span></div>
+    : <Card><div style={{ color: T.muted, fontSize: 12 }}>{k}</div><div className="tabular-nums" style={{ color: color || T.text, fontSize: 26, fontWeight: 700, lineHeight: 1.15, marginTop: 4, letterSpacing: "-0.01em" }}>{v}</div>{sub && <div style={{ color: T.muted, fontSize: 11, marginTop: 2 }}>{sub}</div>}</Card>;
+}
+function Stat({ label, value, color }) {
+  return <div><div style={{ color: T.muted, fontSize: 11 }}>{label}</div><div className="tabular-nums" style={{ color: color || T.text, fontSize: 15, fontWeight: 600 }}>{value}</div></div>;
 }
 
 /* ---------- mock data (synthetic) ---------- */
@@ -271,54 +306,54 @@ const AGENT_EVENTS = [
 
 /* ---------- navigation ---------- */
 const NAV = [
-  { group: "Overview", items: [{ id: "home", label: "Command Center", icon: LayoutGrid }] },
+  { group: "Overview", items: [{ id: "home", label: "Command Center", icon: I.home }] },
   { group: "Sourcing", items: [
-    { id: "thesis", label: "Thesis Builder", icon: Lightbulb },
-    { id: "discovery", label: "Target Discovery", icon: Radar },
-    { id: "companies", label: "Companies", icon: Building2 },
-    { id: "relationship", label: "Relationship Intelligence", icon: Network },
-    { id: "outreach", label: "Outreach", icon: Send },
+    { id: "thesis", label: "Thesis Builder", icon: I.thesis },
+    { id: "discovery", label: "Target Discovery", icon: I.radar },
+    { id: "companies", label: "Companies", icon: I.building },
+    { id: "relationship", label: "Relationship Intelligence", icon: I.network },
+    { id: "outreach", label: "Outreach", icon: I.send },
   ]},
   { group: "Deals", items: [
-    { id: "pipeline", label: "Deal Pipeline", icon: Kanban },
-    { id: "cim", label: "CIM Analyzer", icon: FileText },
-    { id: "diligence", label: "Due Diligence", icon: ClipboardCheck },
-    { id: "redteam", label: "Red Team", icon: ShieldAlert },
-    { id: "icmemo", label: "IC Memo", icon: FileSignature },
+    { id: "pipeline", label: "Deal Pipeline", icon: I.kanban },
+    { id: "cim", label: "CIM Analyzer", icon: I.doc },
+    { id: "diligence", label: "Due Diligence", icon: I.clipboard },
+    { id: "redteam", label: "Red Team", icon: I.shield },
+    { id: "icmemo", label: "IC Memo", icon: I.memo },
   ]},
   { group: "Portfolio", items: [
-    { id: "portfolio", label: "Portfolio Intelligence", icon: Briefcase },
-    { id: "value", label: "Value Creation", icon: TrendingUp },
+    { id: "portfolio", label: "Portfolio Intelligence", icon: I.briefcase },
+    { id: "value", label: "Value Creation", icon: I.trend },
   ]},
   { group: "Knowledge", items: [
-    { id: "knowledge", label: "MCM Knowledge", icon: BookOpen },
-    { id: "library", label: "Research Library", icon: Library },
+    { id: "knowledge", label: "MCM Knowledge", icon: I.book },
+    { id: "library", label: "Research Library", icon: I.library },
   ]},
   { group: "System", items: [
-    { id: "agents", label: "Agent Activity", icon: Activity },
-    { id: "evals", label: "Evaluations", icon: FlaskConical },
+    { id: "agents", label: "Agent Activity", icon: I.activity },
+    { id: "evals", label: "Evaluations", icon: I.flask },
   ]},
 ];
 
 function Sidebar({ route, go, collapsed, setCollapsed }) {
   return (
-    <aside className="flex flex-col shrink-0 h-screen sticky top-0" style={{ width: collapsed ? 56 : 232, background: T.nav, color: T.navText, transition: "width 150ms" }}>
-      <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+    <aside className="flex flex-col shrink-0 h-screen sticky top-0" style={{ width: collapsed ? 56 : 224, background: T.nav, color: T.navText, transition: "width 150ms" }}>
+      <div className="flex items-center justify-between" style={{ padding: "20px 16px 12px" }}>
         {!collapsed && (
           <div>
-            <div className="text-white font-semibold tracking-wide leading-tight" style={{ fontSize: 15 }}>MCM</div>
-            <div className="text-white font-semibold tracking-widest leading-tight" style={{ fontSize: 11, letterSpacing: "0.18em" }}>INTELLIGENCE</div>
-            <div className="text-xs mt-1" style={{ color: "#6f7f9a" }}>Concept Prototype</div>
+            <div className="flex items-center justify-center bg-white" style={{ width: 44, height: 44, borderRadius: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.25)" }}><span style={{ color: T.nav, fontWeight: 800, fontSize: 13, letterSpacing: "-0.02em" }}>MCM</span></div>
+            <div className="text-white font-semibold" style={{ fontSize: 10.5, letterSpacing: "0.2em", marginTop: 10 }}>INTELLIGENCE</div>
+            <div style={{ color: "#5F6F8A", fontSize: 11, marginTop: 2 }}>Concept prototype</div>
           </div>
         )}
-        <button onClick={() => setCollapsed(!collapsed)} className="p-1 rounded hover:bg-white/10" style={{ color: "#8797b3" }}>
-          {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+        <button onClick={() => setCollapsed(!collapsed)} className="p-1 rounded hover:bg-white/10" style={{ color: "#6E7E98" }}>
+          {collapsed ? <I.panelOpen size={17} /> : <I.panelClose size={17} />}
         </button>
       </div>
-      <nav className="flex-1 overflow-y-auto px-2 pb-2">
+      <nav className="flex-1 overflow-y-auto" style={{ padding: "4px 8px 8px" }}>
         {NAV.map((g) => (
-          <div key={g.group} className="mt-3">
-            {!collapsed && <div className="px-2 mb-1 text-xs font-medium" style={{ color: "#5e6d88" }}>{g.group}</div>}
+          <div key={g.group} style={{ marginTop: 20 }}>
+            {!collapsed && <div style={{ color: "#556479", fontSize: 10.5, letterSpacing: "0.08em", textTransform: "uppercase", padding: "0 10px 6px" }}>{g.group}</div>}
             {g.items.map((it) => {
               const active = route === it.id || (it.id === "companies" && route === "company");
               return (
@@ -326,10 +361,10 @@ function Sidebar({ route, go, collapsed, setCollapsed }) {
                   key={it.id}
                   onClick={() => go(it.id)}
                   title={it.label}
-                  className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-sm text-left"
-                  style={{ background: active ? T.navActive : "transparent", color: active ? "#fff" : T.navText }}
+                  className="w-full flex items-center gap-2.5 text-left relative"
+                  style={{ padding: "7px 10px", borderRadius: R.ctl, fontSize: 13.5, background: active ? T.navActive : "transparent", color: active ? "#fff" : T.navText, transition: EASE }}
                 >
-                  <it.icon size={15} style={{ color: active ? "#8fb0dc" : "#7f8faa" }} />
+                  <it.icon size={18} style={{ color: active ? "#9EC2EA" : "#7A8AA6", flexShrink: 0 }} />
                   {!collapsed && <span className="truncate">{it.label}</span>}
                 </button>
               );
@@ -338,9 +373,10 @@ function Sidebar({ route, go, collapsed, setCollapsed }) {
         ))}
       </nav>
       {!collapsed && (
-        <div className="px-4 py-3 text-xs" style={{ borderTop: "1px solid #1f2c45" }}>
-          <div className="text-white font-medium">Mahbub Ahmed</div>
-          <div style={{ color: "#6f7f9a" }}>Prototype Workspace</div>
+        <div className="flex items-center gap-3" style={{ padding: "14px 16px", borderTop: "1px solid #1B2A40", fontSize: 12 }}>
+          <div className="flex items-center justify-center" style={{ width: 30, height: 30, borderRadius: 999, background: T.navActive, color: "#fff", fontSize: 11, fontWeight: 600 }}>MA</div>
+          <div><div className="text-white font-medium">Mahbub Ahmed</div>
+          <div style={{ color: "#5F6F8A" }}>Prototype workspace</div></div>
         </div>
       )}
     </aside>
@@ -350,39 +386,38 @@ function Sidebar({ route, go, collapsed, setCollapsed }) {
 function Topbar({ openSearch, openAsk, notify }) {
   const [showNotif, setShowNotif] = useState(false);
   return (
-    <div className="h-12 flex items-center justify-between px-5 sticky top-0 z-20" style={{ background: "#fff", borderBottom: `1px solid ${T.border}` }}>
-      <div className="flex items-center gap-3 text-sm">
-        <span className="font-medium" style={{ color: T.text }}>MCM Capital Partners</span>
-        <span style={{ color: T.muted }}>/</span>
-        <span style={{ color: T.muted }}>Fund IV investment workspace</span>
-        <Demo>Synthetic data</Demo>
+    <div className="h-14 grid items-center px-6 sticky top-0 z-20" style={{ gridTemplateColumns: "1fr auto 1fr", background: "rgba(247,247,245,0.8)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: `1px solid ${T.border}` }}>
+      <div className="flex items-center gap-2" style={{ fontSize: 13 }}>
+        <span className="font-semibold" style={{ color: T.text }}>MCM Capital Partners</span>
+        <span style={{ color: T.border }}>/</span>
+        <span style={{ color: T.muted }}>Fund IV</span>
       </div>
-      <div className="flex items-center gap-2">
-        <button onClick={openSearch} className="flex items-center gap-2 text-sm px-3 py-1.5 rounded w-72" style={{ border: `1px solid ${T.border}`, color: T.muted, background: T.bg }}>
-          <Search size={14} /> <span className="flex-1 text-left">Search companies, deals, documents</span>
-          <span className="text-xs px-1 rounded" style={{ border: `1px solid ${T.border}`, background: "#fff" }}>Ctrl K</span>
-        </button>
+      <button onClick={openSearch} className="flex items-center gap-2 px-4 py-2 w-[440px] bg-white" style={{ borderRadius: R.chip, color: T.muted, fontSize: 13, boxShadow: "inset 0 0 0 1px " + T.border, transition: EASE }}>
+        <I.search size={16} /> <span className="flex-1 text-left">Search companies, deals, documents, people</span>
+        <span style={{ fontSize: 11, padding: "0 6px", borderRadius: 6, background: T.soft }}>Ctrl K</span>
+      </button>
+      <div className="flex items-center justify-end gap-2">
         <div className="relative">
-          <button onClick={() => setShowNotif(!showNotif)} className="p-2 rounded relative" style={{ color: T.muted }}>
-            <Bell size={16} />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full" style={{ background: T.red }} />
+          <button onClick={() => setShowNotif(!showNotif)} className="relative flex items-center justify-center bg-white" style={{ width: 36, height: 36, borderRadius: 12, color: T.muted, boxShadow: "inset 0 0 0 1px " + T.border, transition: EASE }}>
+            <I.bell size={17} />
+            <span className="absolute -top-1 -right-1 flex items-center justify-center text-white tabular-nums" style={{ width: 16, height: 16, borderRadius: 999, background: T.red, fontSize: 9.5, fontWeight: 700 }}>3</span>
           </button>
           {showNotif && (
-            <div className="absolute right-0 mt-1 w-80 bg-white rounded shadow-lg z-30 text-sm" style={{ border: `1px solid ${T.border}` }}>
+            <div className="absolute right-0 mt-2 w-80 bg-white z-30 overflow-hidden" style={{ borderRadius: R.card, boxShadow: SHADOW_HOVER, fontSize: 13 }}>
               {[
-                ["Red Team", "Project Falcon: three items require resolution"],
-                ["Qualification Agent", "Precision MedTech Solutions promoted to Priority"],
-                ["Diligence", "2 financial questions awaiting owner"],
-              ].map(([a, b], i) => (
-                <div key={i} className="px-3 py-2" style={{ borderBottom: `1px solid ${T.border}` }}>
-                  <div className="text-xs font-medium" style={{ color: T.accent }}>{a}</div>
-                  <div style={{ color: T.text }}>{b}</div>
+                ["Red Team", "Project Falcon: three items require resolution", "critical"],
+                ["Qualification", "Precision MedTech Solutions promoted to Priority", "active"],
+                ["Diligence", "2 financial questions awaiting owner", "review"],
+              ].map(([a, b, pr], i) => (
+                <div key={i} className="px-3 py-2.5 flex gap-2" style={{ borderBottom: `1px solid ${T.border}` }}>
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: PRI[pr][0] }} />
+                  <div><div style={{ fontSize: 11, color: T.muted }}>{a}</div><div style={{ color: T.text }}>{b}</div></div>
                 </div>
               ))}
             </div>
           )}
         </div>
-        <Btn icon={MessageSquare} onClick={openAsk}>Ask MCM Intelligence</Btn>
+        <Btn primary icon={I.chat} onClick={openAsk}>Ask Intelligence</Btn>
       </div>
     </div>
   );
@@ -411,7 +446,7 @@ function GlobalSearch({ onClose, go, openCompany }) {
   }, [ql]);
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-24" style={{ background: "rgba(16,26,43,0.45)" }} onClick={onClose}>
-      <div className="bg-white rounded shadow-xl w-[680px] max-w-[95vw]" onClick={(e) => e.stopPropagation()} style={{ border: `1px solid ${T.border}` }}>
+      <div className="bg-white w-[680px] max-w-[95vw] overflow-hidden" onClick={(e) => e.stopPropagation()} style={{ borderRadius: R.hero, boxShadow: "0 24px 64px rgba(15,28,46,0.28)" }}>
         <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: `1px solid ${T.border}` }}>
           <Search size={16} style={{ color: T.muted }} />
           <input ref={ref} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search across companies, deals, documents, relationships, research, portfolio, knowledge" className="flex-1 text-sm outline-none" style={{ color: T.text }} />
@@ -504,10 +539,10 @@ function AskPanel({ ctx, onClose }) {
     setTimeout(() => { setThread((t) => [...t, { role: "ai", a: askAnswer(q, ctx), q }]); setBusy(false); }, 900);
   };
   return (
-    <div className="fixed right-0 top-0 h-screen w-[420px] bg-white z-40 flex flex-col shadow-2xl" style={{ borderLeft: `1px solid ${T.border}` }}>
+    <div className="fixed right-3 top-3 bottom-3 w-[420px] bg-white z-40 flex flex-col overflow-hidden" style={{ borderRadius: R.hero, boxShadow: SHADOW_HOVER }}>
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${T.border}` }}>
         <div>
-          <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: T.text }}><MessageSquare size={14} style={{ color: T.accent }} /> Ask MCM Intelligence</div>
+          <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: T.text }}><I.chat size={16} style={{ color: T.accent }} /> Ask Intelligence</div>
           <div className="text-xs mt-0.5" style={{ color: T.muted }}>Context: {ctx.company ? ctx.company.name : ctx.deal || "Workspace"}</div>
         </div>
         <button onClick={onClose} style={{ color: T.muted }}><X size={16} /></button>
@@ -517,7 +552,7 @@ function AskPanel({ ctx, onClose }) {
           <div>
             <div className="text-xs mb-2" style={{ color: T.muted }}>Suggested questions for this context</div>
             {ASK_Q.map((q) => (
-              <button key={q} onClick={() => ask(q)} className="block w-full text-left text-sm px-3 py-2 rounded mb-1.5 hover:bg-stone-50" style={{ border: `1px solid ${T.border}`, color: T.text }}>{q}</button>
+              <button key={q} onClick={() => ask(q)} className="block w-full text-left text-sm px-3 py-2 mb-1.5 hover:bg-stone-50" style={{ borderRadius: R.ctl, border: `1px solid ${T.border}`, color: T.text }}>{q}</button>
             ))}
           </div>
         )}
@@ -548,7 +583,7 @@ function AskPanel({ ctx, onClose }) {
 function Toast({ msg }) {
   if (!msg) return null;
   return (
-    <div className="fixed bottom-5 right-5 z-50 text-sm px-4 py-2.5 rounded shadow-lg flex items-center gap-2" style={{ background: T.text, color: "#fff" }}>
+    <div className="fixed bottom-5 right-5 z-50 text-sm px-4 py-2.5 flex items-center gap-2" style={{ background: T.text, color: "#fff", borderRadius: 12, boxShadow: SHADOW_HOVER }}>
       <Check size={14} style={{ color: "#7fd1a2" }} /> {msg}
     </div>
   );
@@ -556,91 +591,102 @@ function Toast({ msg }) {
 
 /* ---------- Command Center ---------- */
 function CommandCenter({ go, openCompany, setStageFilter }) {
-  const kpis = [["Active investment theses", "6"], ["Companies monitored", "1,284"], ["Qualified targets", "143"], ["Active opportunities", "12"], ["Deals in diligence", "3"], ["Research hours saved (est.)", "184"]];
-  const funnel = [["Universe", 1284], ["Screened", 428], ["MCM Fit", 143], ["Priority", 37], ["Contacted", 21], ["Active Dialogue", 12], ["Diligence", 3], ["IC", 1]];
-  const alerts = [
-    { k: "New target surfaced", t: "Precision MedTech Solutions", d: "Fit Score 91. Highly engineered medical component manufacturer matching active thesis.", c: T.green, action: () => openCompany("pms") },
-    { k: "Material diligence flag", t: "Project Falcon", d: "Customer concentration increased from 31% to 44% in the latest data-room update.", c: T.red, action: () => go("diligence") },
-    { k: "Relationship opportunity", t: "Apex Motion Systems", d: "Founder announced a succession planning initiative at an industry panel.", c: T.accent, action: () => openCompany("ams") },
-    { k: "Portfolio signal", t: "Portfolio company (aerospace)", d: "Improving aerospace order activity based on recent operational reporting.", c: T.amber, action: () => go("portfolio") },
+  const funnel = [["Universe", 1284], ["Screened", 428], ["Qualified", 143], ["Priority", 37], ["Contacted", 21], ["Dialogue", 12], ["Diligence", 3], ["IC", 1]];
+  const attention = [
+    { p: "critical", t: "Project Falcon", d: "Customer concentration increased from 31% to 44% in the latest data-room update.", action: () => go("diligence"), cta: "Open diligence" },
+    { p: "review", t: "Apex Motion Systems", d: "Founder announced a succession planning initiative at an industry panel.", action: () => openCompany("ams"), cta: "Open company" },
+    { p: "active", t: "Precision MedTech Solutions", d: "New target surfaced at fit 91. Awaiting deal team decision on priority.", action: () => openCompany("pms"), cta: "Review fit" },
   ];
   return (
     <div>
-      <div className="flex items-end justify-between mb-3">
+      <div className="flex items-start justify-between" style={{ marginBottom: 24 }}>
         <div>
-          <div className="text-xs" style={{ color: T.muted }}>Good morning</div>
-          <h1 className="text-lg font-semibold tracking-tight" style={{ color: T.text }}>MCM Investment Command Center</h1>
-          <p className="text-sm mt-0.5" style={{ color: T.muted }}>AI-assisted view across sourcing, active opportunities, diligence and portfolio intelligence.</p>
+          <div style={{ color: T.muted, fontSize: 12 }}>Good morning</div>
+          <div className="flex items-center gap-3"><h1 className="tracking-tight" style={{ color: T.text, fontSize: 24, fontWeight: 700, margin: 0, lineHeight: 1.2 }}>Investment Command Center</h1><Demo>Synthetic demo</Demo></div>
+          <p style={{ color: T.muted, fontSize: 13, margin: "4px 0 0" }}>One view across sourcing, active opportunities, diligence and portfolio.</p>
         </div>
-        <Demo>All figures are synthetic demo data</Demo>
       </div>
-      <div className="grid grid-cols-6 gap-3 mb-4">
-        {kpis.map(([k, v]) => (
-          <Card key={k} className="py-2">
-            <div className="text-xs" style={{ color: T.muted }}>{k}</div>
-            <div className="text-xl font-semibold tabular-nums mt-0.5" style={{ color: T.text }}>{v}</div>
-          </Card>
-        ))}
+
+      <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr 1.3fr", marginBottom: 24 }}>
+        <Metric k="Qualified targets" v="143" />
+        <Metric k="Active opportunities" v="12" />
+        <Metric k="Deals in diligence" v="3" />
+        <Metric k="Investment committee" v="1" sub="Project Falcon, Oct 2" />
+        <Card className="py-2">
+          <Metric secondary k="Companies monitored" v="1,284" />
+          <Metric secondary k="Active theses" v="6" />
+          <div className="flex items-baseline justify-between py-2"><span style={{ color: T.muted, fontSize: 12 }}>Research hours saved (est.)</span><span className="tabular-nums font-semibold" style={{ color: T.text, fontSize: 15 }}>184</span></div>
+        </Card>
       </div>
-      <Card className="mb-4">
-        <SectionTitle right={<span className="text-xs" style={{ color: T.muted }}>Click a stage to open it in Target Discovery</span>}>Pipeline overview</SectionTitle>
-        <div className="flex items-stretch gap-1">
-          {funnel.map(([s, n], i) => (
-            <button key={s} onClick={() => { setStageFilter(s); go(i >= 6 ? "pipeline" : "discovery"); }} className="flex-1 text-left rounded-sm px-2.5 py-1.5 hover:bg-stone-50" style={{ border: `1px solid ${T.border}` }}>
-              <div className="text-xs" style={{ color: T.muted }}>{s}</div>
-              <div className="text-base font-semibold tabular-nums" style={{ color: T.text }}>{n.toLocaleString()}</div>
-              <div className="h-1 rounded mt-1" style={{ background: T.accent, width: `${Math.max(8, (n / 1284) * 100)}%` }} />
+
+      <Card style={{ marginBottom: 24 }}>
+        <SectionTitle right={<span style={{ color: T.muted, fontSize: 12 }}>3 items require review</span>}>Needs attention</SectionTitle>
+        <div className="grid grid-cols-3 gap-4">
+          {attention.map((a) => (
+            <button key={a.t} onClick={a.action} className="text-left p-4" style={{ background: PRI[a.p][1], borderRadius: R.card, transition: EASE }} onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-2px)"} onMouseLeave={(e) => e.currentTarget.style.transform = "none"}>
+              <Pri p={a.p} />
+              <div className="mt-2" style={{ color: T.text, fontSize: 14, fontWeight: 600 }}>{a.t}</div>
+              <div style={{ color: T.muted, fontSize: 12, marginTop: 4, lineHeight: 1.5 }}>{a.d}</div>
+              <div className="flex items-center gap-1 mt-3" style={{ color: PRI[a.p][0], fontSize: 12, fontWeight: 500 }}>{a.cta} <ArrowRight size={12} /></div>
             </button>
           ))}
         </div>
       </Card>
-      <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-2 space-y-4">
-          <Card>
-            <SectionTitle>Today's intelligence</SectionTitle>
-            <div className="grid grid-cols-2 gap-3">
-              {alerts.map((a) => (
-                <button key={a.k} onClick={a.action} className="text-left rounded-sm p-2.5 hover:bg-stone-50" style={{ border: `1px solid ${T.border}`, borderLeft: `3px solid ${a.c}` }}>
-                  <div className="text-xs font-medium" style={{ color: a.c }}>{a.k}</div>
-                  <div className="text-sm font-semibold mt-0.5" style={{ color: T.text }}>{a.t}</div>
-                  <div className="text-xs mt-1" style={{ color: T.muted }}>{a.d}</div>
-                </button>
-              ))}
-            </div>
-          </Card>
-          <Card pad={false}>
-            <div className="px-4 pt-4"><SectionTitle>Active investment theses</SectionTitle></div>
-            <table className="w-full text-sm">
-              <thead><tr className="text-xs" style={{ color: T.muted }}>{["Thesis", "Status", "Targets", "Qualified", "Owner", "Updated"].map((h) => <th key={h} className="text-left font-medium px-4 py-1.5" style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
-              <tbody>
-                {THESES.map((t) => (
-                  <tr key={t.name} className="hover:bg-stone-50 cursor-pointer" onClick={() => go("thesis")} style={{ borderBottom: `1px solid ${T.border}` }}>
-                    <td className="px-4 py-2 font-medium" style={{ color: T.text }}>{t.name}</td>
-                    <td className="px-4 py-2"><span className="text-xs px-1.5 py-0.5 rounded" style={{ background: t.status === "Active" ? T.greenSoft : T.amberSoft, color: t.status === "Active" ? T.green : T.amber }}>{t.status}</span></td>
-                    <td className="px-4 py-2 tabular-nums">{t.targets}</td>
-                    <td className="px-4 py-2 tabular-nums">{t.qualified}</td>
-                    <td className="px-4 py-2" style={{ color: T.muted }}>{t.owner}</td>
-                    <td className="px-4 py-2" style={{ color: T.muted }}>{t.updated}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
+
+      <Card style={{ marginBottom: 24 }}>
+        <SectionTitle right={<span style={{ color: T.muted, fontSize: 12 }}>Click a stage to open it</span>}>Pipeline</SectionTitle>
+        <div className="flex items-end gap-1">
+          {funnel.map(([s, n], i) => {
+            const prev = i ? funnel[i - 1][1] : null;
+            const conv = prev ? Math.round((n / prev) * 100) : null;
+            const h = 12 + Math.round(Math.log10(n + 1) * 22);
+            return (
+              <button key={s} onClick={() => { setStageFilter(s === "Qualified" ? "MCM Fit" : s === "Dialogue" ? "Active Dialogue" : s); go(i >= 6 ? "pipeline" : "discovery"); }} className="flex-1 text-left hover:opacity-90" style={{ minWidth: 0 }}>
+                <div style={{ height: h, borderRadius: "8px 8px 3px 3px", background: i >= 6 ? T.accent : `rgba(36,90,145,${0.22 + i * 0.1})`, transition: EASE }} />
+                <div className="pt-2">
+                  <div style={{ color: T.muted, fontSize: 11 }}>{s}</div>
+                  <div className="tabular-nums" style={{ color: T.text, fontSize: 18, fontWeight: 650 }}>{n.toLocaleString()}</div>
+                  <div className="tabular-nums" style={{ color: T.muted, fontSize: 11 }}>{conv != null ? `${conv}% of prior` : "monitored"}</div>
+                </div>
+              </button>
+            );
+          })}
         </div>
+      </Card>
+
+      <div className="grid grid-cols-3 gap-4">
+        <Card pad={false} className="col-span-2">
+          <div className="px-4 pt-4"><SectionTitle>Active investment theses</SectionTitle></div>
+          <table className="w-full" style={{ fontSize: 13 }}>
+            <thead><tr style={{ color: T.muted, fontSize: 11 }}>{["Thesis", "Status", "Targets", "Qualified", "Owner", "Updated"].map((h, i) => <th key={h} className={`font-medium px-4 py-1.5 ${i === 2 || i === 3 ? "text-right" : "text-left"}`} style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
+            <tbody>
+              {THESES.map((t) => (
+                <tr key={t.name} className="hover:bg-stone-50 cursor-pointer" onClick={() => go("thesis")} style={{ borderBottom: `1px solid ${T.border}` }}>
+                  <td className="px-4 py-2.5 font-medium" style={{ color: T.text }}>{t.name}</td>
+                  <td className="px-4 py-2.5"><Pri p={t.status === "Active" ? "healthy" : "review"} label={t.status} /></td>
+                  <td className="px-4 py-2.5 tabular-nums text-right">{t.targets}</td>
+                  <td className="px-4 py-2.5 tabular-nums text-right">{t.qualified}</td>
+                  <td className="px-4 py-2.5" style={{ color: T.muted }}>{t.owner}</td>
+                  <td className="px-4 py-2.5" style={{ color: T.muted }}>{t.updated}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
         <Card>
-          <SectionTitle right={<span className="flex items-center gap-1 text-xs" style={{ color: T.muted }}><span className="w-1.5 h-1.5 rounded-full" style={{ background: T.green }} /> Updated 08:42</span>}>Activity log</SectionTitle>
+          <SectionTitle right={<span style={{ color: T.muted, fontSize: 11 }}>Updated 08:42</span>}>Activity</SectionTitle>
           <div className="space-y-3">
             {AGENT_EVENTS.map((e, i) => (
               <div key={i} className="flex gap-3">
-                <div className="mt-0.5 w-6 h-6 rounded flex items-center justify-center shrink-0" style={{ background: T.accentSoft, color: T.accent }}><e.icon size={13} /></div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between"><span className="text-xs font-medium" style={{ color: T.text }}>{e.agent}</span><span className="text-xs tabular-nums" style={{ color: T.muted }}>{e.time}</span></div>
-                  <div className="text-xs" style={{ color: T.muted }}>{e.text}</div>
+                <div className="mt-0.5 w-7 h-7 flex items-center justify-center shrink-0" style={{ background: T.accentSoft, color: T.accent, borderRadius: 9 }}><e.icon size={13} strokeWidth={1.7} /></div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between"><span className="font-medium" style={{ color: T.text, fontSize: 12.5 }}>{e.agent}</span><span className="tabular-nums" style={{ color: T.muted, fontSize: 11 }}>{e.time}</span></div>
+                  <div style={{ color: T.muted, fontSize: 12 }}>{e.text}</div>
                 </div>
               </div>
             ))}
           </div>
-          <button onClick={() => go("agents")} className="mt-3 text-xs flex items-center gap-1" style={{ color: T.accent }}>View architecture <ArrowRight size={12} /></button>
+          <button onClick={() => go("agents")} className="mt-3 flex items-center gap-1" style={{ color: T.accent, fontSize: 12 }}>View architecture <ArrowRight size={12} /></button>
         </Card>
       </div>
     </div>
@@ -662,12 +708,12 @@ function ThesisBuilder({ go, setThesisCtx }) {
     <div className="mb-3"><div className="text-xs font-medium mb-1" style={{ color: T.muted }}>{label}</div>{children}</div>
   );
   const Input = ({ v, multi }) => multi
-    ? <textarea defaultValue={v} rows={4} className="w-full text-sm px-2.5 py-1.5 rounded outline-none focus:ring-2 focus:ring-blue-200" style={{ border: `1px solid ${T.border}`, color: T.text }} />
-    : <input defaultValue={v} className="w-full text-sm px-2.5 py-1.5 rounded outline-none focus:ring-2 focus:ring-blue-200" style={{ border: `1px solid ${T.border}`, color: T.text }} />;
+    ? <textarea defaultValue={v} rows={4} className="w-full text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200" style={{ border: `1px solid ${T.border}`, color: T.text, borderRadius: R.ctl, transition: EASE }} />
+    : <input defaultValue={v} className="w-full text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200" style={{ border: `1px solid ${T.border}`, color: T.text, borderRadius: R.ctl, transition: EASE }} />;
   const Chips = ({ items, color }) => <div className="flex flex-wrap gap-1.5">{items.map((i) => <span key={i} className="text-xs px-2 py-0.5 rounded" style={{ background: color === "red" ? T.redSoft : T.accentSoft, color: color === "red" ? T.red : T.accent }}>{i}</span>)}</div>;
   return (
     <div>
-      <PageHeader title="Investment Thesis Builder" sub="Translate MCM investment strategy into a researchable, testable sourcing thesis." crumbs={["Sourcing", "Thesis Builder"]} right={<Demo>Synthetic thesis</Demo>} />
+      <PageHeader title="Investment Thesis Builder" sub="Translate MCM investment strategy into a researchable, testable sourcing thesis." crumbs={["Sourcing", "Thesis Builder"]} demo="Synthetic thesis" />
       <div className="grid grid-cols-5 gap-4">
         <Card className="col-span-2">
           <Field label="Thesis name"><Input v="Medical Device Precision Components" /></Field>
@@ -750,6 +796,7 @@ function TargetDiscovery({ openCompany, stageFilter, companiesMode, thesisCtx, c
   const [own, setOwn] = useState("All");
   const [sort, setSort] = useState({ k: "fit", d: -1 });
   const [loading, setLoading] = useState(true);
+  const [more, setMore] = useState(false);
   useEffect(() => { const t = setTimeout(() => setLoading(false), 450); return () => clearTimeout(t); }, []);
   useEffect(() => { if (thesisCtx) setThesis(thesisCtx); }, [thesisCtx]);
   const rows = useMemo(() => {
@@ -759,76 +806,76 @@ function TargetDiscovery({ openCompany, stageFilter, companiesMode, thesisCtx, c
     return [...r].sort((a, b) => (a[sort.k] > b[sort.k] ? 1 : -1) * sort.d);
   }, [q, thesis, sector, minFit, own, sort, stageFilter]);
   const Sel = ({ label, v, set, opts }) => (
-    <label className="text-xs flex items-center gap-1.5" style={{ color: T.muted }}>{label}
-      <select value={v} onChange={(e) => set(e.target.value)} className="text-xs px-1.5 py-1 rounded-sm bg-white" style={{ border: `1px solid ${T.border}`, color: T.text }}>{opts.map((o) => <option key={o}>{o}</option>)}</select>
-    </label>
+    <select value={v} onChange={(e) => set(e.target.value)} className="bg-white" style={{ fontSize: 13, padding: "6px 10px", borderRadius: R.chip, border: `1px solid ${T.border}`, color: v === "All" ? T.muted : T.text }}>{opts.map((o) => <option key={o}>{o === "All" ? label : o}</option>)}</select>
   );
   const Th = ({ label, k, right, w }) => (
-    <th className={`font-medium px-3 py-1.5 sticky top-0 bg-white select-none ${right ? "text-right" : "text-left"} ${k ? "cursor-pointer" : ""}`} style={{ borderBottom: `1px solid ${T.border}`, color: T.muted, width: w }} onClick={() => k && setSort({ k, d: sort.k === k ? -sort.d : -1 })}>
-      <span className="inline-flex items-center gap-1">{label}{k && <ArrowUpDown size={10} style={{ opacity: sort.k === k ? 1 : 0.4 }} />}</span>
+    <th className={`font-medium px-4 py-2 sticky top-0 bg-white select-none ${right ? "text-right" : "text-left"} ${k ? "cursor-pointer" : ""}`} style={{ borderBottom: `1px solid ${T.border}`, color: T.muted, fontSize: 11, width: w }} onClick={() => k && setSort({ k, d: sort.k === k ? -sort.d : -1 })}>
+      <span className="inline-flex items-center gap-1">{label}{k && <ArrowUpDown size={10} style={{ opacity: sort.k === k ? 1 : 0.35 }} />}</span>
     </th>
   );
-  const fitColor = (v) => (v >= 90 ? T.green : v >= 75 ? T.accent : T.unknown);
+  const qualified = COMPANIES.filter((c) => c.fit >= 75).length, priority = COMPANIES.filter((c) => c.fit >= 85).length;
   return (
     <div>
-      <PageHeader title={companiesMode ? "Companies" : "Target Discovery"} sub={companiesMode ? "All monitored companies in the demo universe." : "Identification and qualification against active MCM investment theses."} crumbs={["Sourcing", companiesMode ? "Companies" : "Target Discovery"]} right={<Demo>12 synthetic companies</Demo>} />
+      <PageHeader title={companiesMode ? "Companies" : "Target Discovery"} sub={companiesMode ? "All monitored companies in the demo universe." : "Identify and qualify targets against active investment theses."} crumbs={["Sourcing", companiesMode ? "Companies" : "Target Discovery"]} demo="12 synthetic companies" />
       {(thesisCtx || (stageFilter && stageFilter !== "Universe")) && !companiesMode && (
-        <div className="flex items-center justify-between px-3 py-1.5 mb-2 text-xs rounded-sm" style={{ background: T.accentSoft, color: T.accent, border: `1px solid ${T.accent}33` }}>
+        <div className="flex items-center justify-between px-4 py-2" style={{ background: T.accentSoft, color: T.accent, borderRadius: 10, marginBottom: 16, fontSize: 12 }}>
           <span className="flex items-center gap-2"><Lightbulb size={12} />{thesisCtx ? `Showing targets researched under the ${thesisCtx} thesis` : `Pipeline stage: ${stageFilter}`}</span>
-          <button onClick={() => { setThesis("All"); clearCtx && clearCtx(); }} className="underline">Show all theses</button>
+          <button onClick={() => { setThesis("All"); clearCtx && clearCtx(); }} className="underline">Show all</button>
         </div>
       )}
-      <div className="flex items-center gap-3 flex-wrap px-3 py-2 mb-2 bg-white rounded-sm" style={{ border: `1px solid ${T.border}` }}>
-        <span className="flex items-center gap-2 px-2 rounded-sm w-64" style={{ border: `1px solid ${T.border}` }}><Search size={12} style={{ color: T.muted }} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Company, location or signal" className="text-xs py-1 flex-1 outline-none" style={{ color: T.text }} /></span>
+      <div className="flex items-center gap-2 flex-wrap" style={{ marginBottom: 16 }}>
+        <span className="flex items-center gap-2 px-4 bg-white" style={{ border: `1px solid ${T.border}`, borderRadius: R.chip, width: 300 }}><Search size={13} style={{ color: T.muted }} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Company, location or signal" className="flex-1 outline-none" style={{ fontSize: 13, padding: "6px 0", color: T.text }} /></span>
         <Sel label="Thesis" v={thesis} set={setThesis} opts={["All", "Medical Device Precision Components", "Aerospace Precision Components", "Engineered Thermal Management", "Specialty Industrial Distribution"]} />
         <Sel label="Sector" v={sector} set={setSector} opts={["All", ...new Set(COMPANIES.map((c) => c.sector))]} />
         <Sel label="Ownership" v={own} set={setOwn} opts={["All", "Founder-owned", "Family-owned", "PE-backed"]} />
-        <label className="text-xs flex items-center gap-1.5" style={{ color: T.muted }}>Min fit <input type="range" min={0} max={95} value={minFit} onChange={(e) => setMinFit(+e.target.value)} className="w-24" /><span className="tabular-nums w-5" style={{ color: T.text }}>{minFit}</span></label>
-        <span className="flex items-center gap-1 ml-auto">{["Revenue", "EBITDA", "Geography", "Relationship", "Last contact", "Risk"].map((f) => <button key={f} className="text-xs px-1.5 py-0.5 rounded-sm" style={{ border: `1px solid ${T.border}`, color: T.muted }}>{f}</button>)}</span>
+        <span className="flex items-center gap-2 px-4 bg-white" style={{ border: `1px solid ${T.border}`, borderRadius: R.chip, fontSize: 12, color: T.muted, height: 34 }}>Fit <input type="range" min={0} max={95} value={minFit} onChange={(e) => setMinFit(+e.target.value)} style={{ width: 90 }} /><span className="tabular-nums" style={{ color: T.text, width: 18 }}>{minFit}</span></span>
+        <Btn icon={Filter} onClick={() => setMore(!more)}>More filters (6)</Btn>
+        <span className="ml-auto flex items-center gap-6">
+          <Stat label="Qualified" value={qualified} />
+          <Stat label="Priority" value={priority} />
+        </span>
       </div>
+      {more && (
+        <div className="flex items-center gap-2 flex-wrap p-3" style={{ background: T.soft, borderRadius: 12, marginBottom: 16 }}>
+          {["Revenue", "EBITDA", "Geography", "Relationship", "Last contact", "Risk"].map((f) => <span key={f} className="bg-white" style={{ fontSize: 12, padding: "5px 10px", borderRadius: 6, border: `1px solid ${T.border}`, color: T.muted }}>{f}: Any</span>)}
+          <span style={{ fontSize: 11, color: T.muted, marginLeft: 8 }}>Additional filters are illustrative in this prototype.</span>
+        </div>
+      )}
       <Card pad={false} className="overflow-hidden">
-        <div className="overflow-auto" style={{ maxHeight: 580 }}>
-          <table className="w-full text-xs" style={{ borderCollapse: "separate", borderSpacing: 0 }}>
+        <div className="overflow-auto" style={{ maxHeight: 600 }}>
+          <table className="w-full" style={{ borderCollapse: "separate", borderSpacing: 0, fontSize: 13 }}>
             <thead>
-              <tr style={{ background: "#fafaf8" }}>
-                <th colSpan={2} className="text-left font-medium px-3 py-1 sticky top-0" style={{ color: T.muted, background: "#fafaf8", borderBottom: `1px solid ${T.border}` }}>Company</th>
-                <th colSpan={3} className="text-right font-medium px-3 py-1 sticky top-0" style={{ color: T.muted, background: "#fafaf8", borderBottom: `1px solid ${T.border}`, borderLeft: `1px solid ${T.border}` }}>Financials (estimated)</th>
-                <th colSpan={2} className="text-left font-medium px-3 py-1 sticky top-0" style={{ color: T.muted, background: "#fafaf8", borderBottom: `1px solid ${T.border}`, borderLeft: `1px solid ${T.border}` }}>Assessment</th>
-                <th colSpan={2} className="text-left font-medium px-3 py-1 sticky top-0" style={{ color: T.muted, background: "#fafaf8", borderBottom: `1px solid ${T.border}`, borderLeft: `1px solid ${T.border}` }}>Relationship and signal</th>
-              </tr>
               <tr>
-                <Th label="Name / sector" k="name" /><Th label="Ownership" />
+                <Th label="Company" k="name" w={260} />
                 <Th label="Revenue" k="rev" right /><Th label="EBITDA" k="ebitda" right /><Th label="GM" k="gm" right />
-                <Th label="MCM fit" k="fit" w={150} /><Th label="Confidence" />
-                <Th label="Relationship" /><Th label="Primary signal" />
+                <Th label="MCM fit" k="fit" w={140} /><Th label="Confidence" />
+                <Th label="Relationship" /><Th label="Signal" />
               </tr>
             </thead>
             <tbody>
-              {loading ? [1, 2, 3, 4, 5, 6].map((i) => <tr key={i}><td colSpan={9} className="px-3 py-2"><Skeleton h={12} /></td></tr>) :
-                rows.map((c, i) => (
-                  <tr key={c.id} onClick={() => openCompany(c.id)} className="cursor-pointer hover:bg-stone-50 group" style={{ background: i % 2 ? "#fcfcfb" : "#fff" }}>
-                    <td className="px-3 py-1.5" style={{ borderBottom: `1px solid ${T.border}` }}>
-                      <div className="text-sm font-medium leading-tight" style={{ color: T.text }}>{c.name}</div>
-                      <div className="leading-tight" style={{ color: T.muted }}>{c.sector}, {c.loc}</div>
+              {loading ? [1, 2, 3, 4, 5, 6].map((i) => <tr key={i}><td colSpan={8} className="px-4 py-3"><Skeleton h={14} /></td></tr>) :
+                rows.map((c) => (
+                  <tr key={c.id} onClick={() => openCompany(c.id)} className="cursor-pointer group" style={{ background: "#fff" }} onMouseEnter={(e) => e.currentTarget.style.background = T.accentSoft + "66"} onMouseLeave={(e) => e.currentTarget.style.background = "#fff"}>
+                    <td className="px-4 py-2.5" style={{ borderBottom: `1px solid ${T.border}` }}>
+                      <div className="font-semibold leading-tight" style={{ color: T.text, fontSize: 13.5 }}>{c.name}</div>
+                      <div className="leading-tight" style={{ color: T.muted, fontSize: 12, marginTop: 2 }}>{c.sector} · {c.loc}</div>
+                      <div className="leading-tight" style={{ color: c.own === "PE-backed" ? T.amber : T.muted, fontSize: 11.5, marginTop: 1 }}>{c.own}</div>
                     </td>
-                    <td className="px-3 py-1.5 whitespace-nowrap" style={{ borderBottom: `1px solid ${T.border}`, color: c.own === "PE-backed" ? T.amber : T.text }}>{c.own}</td>
-                    <td className="px-3 py-1.5" style={{ borderBottom: `1px solid ${T.border}`, borderLeft: `1px solid ${T.border}` }}><Num>{money(c.rev)}</Num></td>
-                    <td className="px-3 py-1.5" style={{ borderBottom: `1px solid ${T.border}` }}><Num>{money(c.ebitda)}</Num></td>
-                    <td className="px-3 py-1.5" style={{ borderBottom: `1px solid ${T.border}` }}><Num color={c.gm < 30 && !c.sector.includes("Distribution") ? T.amber : undefined}>{pct(c.gm)}</Num></td>
-                    <td className="px-3 py-1.5" style={{ borderBottom: `1px solid ${T.border}`, borderLeft: `1px solid ${T.border}` }}>
-                      <div className="flex items-center gap-2"><span className="text-sm font-semibold tabular-nums w-6" style={{ color: fitColor(c.fit) }}>{c.fit}</span><div className="flex-1 h-1 rounded-sm" style={{ background: T.unknownSoft }}><div className="h-1 rounded-sm" style={{ width: `${c.fit}%`, background: fitColor(c.fit) }} /></div><span style={{ color: T.muted }}>{c.fit >= 90 ? "Strong" : c.fit >= 75 ? "Potential" : "Monitor"}</span></div>
-                    </td>
-                    <td className="px-3 py-1.5" style={{ borderBottom: `1px solid ${T.border}` }}><Conf v={c.conf} /></td>
-                    <td className="px-3 py-1.5 whitespace-nowrap" style={{ borderBottom: `1px solid ${T.border}`, borderLeft: `1px solid ${T.border}`, color: c.rel === "No relationship" ? T.unknown : T.text }}>{c.rel}</td>
-                    <td className="px-3 py-1.5 whitespace-nowrap" style={{ borderBottom: `1px solid ${T.border}`, color: T.muted }}><span className="flex items-center justify-between gap-2">{c.signal}<ChevronRight size={12} className="opacity-0 group-hover:opacity-100" style={{ color: T.accent }} /></span></td>
+                    <td className="px-4 py-2.5" style={{ borderBottom: `1px solid ${T.border}` }}><Num>{money(c.rev)}</Num></td>
+                    <td className="px-4 py-2.5" style={{ borderBottom: `1px solid ${T.border}` }}><Num>{money(c.ebitda)}</Num></td>
+                    <td className="px-4 py-2.5" style={{ borderBottom: `1px solid ${T.border}` }}><Num color={c.gm < 30 && !c.sector.includes("Distribution") ? T.amber : undefined}>{pct(c.gm)}</Num></td>
+                    <td className="px-4 py-2.5" style={{ borderBottom: `1px solid ${T.border}` }}><FitBadge v={c.fit} /></td>
+                    <td className="px-4 py-2.5" style={{ borderBottom: `1px solid ${T.border}` }}><Conf v={c.conf} /></td>
+                    <td className="px-4 py-2.5 whitespace-nowrap" style={{ borderBottom: `1px solid ${T.border}`, color: c.rel === "No relationship" ? T.unknown : T.text, fontSize: 12.5 }}>{c.rel}</td>
+                    <td className="px-4 py-2.5" style={{ borderBottom: `1px solid ${T.border}`, color: T.muted, fontSize: 12.5 }}><span className="flex items-center justify-between gap-2">{c.signal}<ChevronRight size={12} className="opacity-0 group-hover:opacity-100 shrink-0" style={{ color: T.accent }} /></span></td>
                   </tr>
                 ))}
-              {!loading && rows.length === 0 && <tr><td colSpan={9} className="px-3 py-8 text-center" style={{ color: T.muted }}>No companies match these filters. Widen the fit range or clear the thesis filter.</td></tr>}
+              {!loading && rows.length === 0 && <tr><td colSpan={8} className="px-4 py-10 text-center" style={{ color: T.muted }}>No companies match these filters. Widen the fit range or clear the thesis filter.</td></tr>}
             </tbody>
           </table>
         </div>
-        <div className="px-3 py-1.5 text-xs flex items-center justify-between" style={{ color: T.muted, borderTop: `1px solid ${T.border}`, background: "#fafaf8" }}>
-          <span>{rows.length} of {COMPANIES.length} companies. Fit bands: 90-100 Strong, 75-89 Potential, below 75 Monitor. Sorted by {sort.k}.</span>
+        <div className="px-4 py-2 flex items-center justify-between" style={{ color: T.muted, fontSize: 11, borderTop: `1px solid ${T.border}` }}>
+          <span>{rows.length} of {COMPANIES.length} companies. Fit bands: 90 to 100 Strong, 75 to 89 Potential, below 75 Monitor.</span>
           <span>Financials are external estimates until company data is received.</span>
         </div>
       </Card>
@@ -870,16 +917,16 @@ function CompanyIntelligence({ company, go, notify, openThesis }) {
       <div className="flex items-center gap-1 text-xs mb-2" style={{ color: T.muted }}>
         <span>Sourcing</span><ChevronRight size={12} /><button onClick={() => go("discovery")} className="hover:underline">Target Discovery</button><ChevronRight size={12} /><span style={{ color: T.text }}>{c.name}</span>
       </div>
-      <Card pad={false} className="mb-3">
+      <Card pad={false} style={{ marginBottom: 24 }}>
         <div className="grid grid-cols-12">
-          <div className="col-span-7 p-3" style={{ borderRight: `1px solid ${T.border}` }}>
+          <div className="col-span-7 p-5" style={{ borderRight: `1px solid ${T.border}` }}>
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-lg font-semibold tracking-tight leading-tight" style={{ color: T.text }}>{c.name}</h1>
+                <h1 className="tracking-tight leading-tight" style={{ color: T.text, fontSize: 24, fontWeight: 700, margin: 0 }}>{c.name}</h1>
                 <div className="text-xs mt-0.5" style={{ color: T.muted }}>{isPMS ? "Precision medical-device components" : c.sector}. {c.loc}. {c.own}. ~{c.emp} employees.</div>
                 <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                  {[c.sector, isPMS ? "ISO 13485" : null, c.own, "US"].filter(Boolean).map((t) => <span key={t} className="text-xs px-1.5 py-0.5 rounded-sm" style={{ border: `1px solid ${T.border}`, color: T.text }}>{t}</span>)}
-                  <button onClick={() => openThesis && openThesis(c.thesis)} className="text-xs px-1.5 py-0.5 rounded-sm flex items-center gap-1" style={{ background: T.accentSoft, color: T.accent }}><Lightbulb size={11} /> {c.thesis}</button>
+                  {[c.sector, isPMS ? "ISO 13485" : null, c.own, "US"].filter(Boolean).map((t) => <span key={t} className="text-xs px-1.5 py-0.5 rounded-lg" style={{ border: `1px solid ${T.border}`, color: T.text }}>{t}</span>)}
+                  <button onClick={() => openThesis && openThesis(c.thesis)} className="text-xs px-1.5 py-0.5 rounded-lg flex items-center gap-1" style={{ background: T.accentSoft, color: T.accent }}><Lightbulb size={11} /> {c.thesis}</button>
                 </div>
               </div>
               <Demo>Synthetic demonstration company</Demo>
@@ -891,7 +938,7 @@ function CompanyIntelligence({ company, go, notify, openThesis }) {
               <Fact k="Relationship" v={c.rel === "No relationship" ? "No prior contact" : c.rel} level={c.rel === "No relationship" ? "unknown" : "confirmed"} />
             </div>
           </div>
-          <div className="col-span-5 p-3 flex items-stretch gap-4">
+          <div className="col-span-5 p-5 flex items-stretch gap-5">
             <div className="flex-1">
               <div className="text-xs" style={{ color: T.muted }}>MCM fit score</div>
               <div className="flex items-baseline gap-1"><span className="text-3xl font-semibold tabular-nums leading-none" style={{ color: c.fit >= 90 ? T.green : T.accent }}>{c.fit}</span><span className="text-xs" style={{ color: T.muted }}>/ 100</span></div>
@@ -900,14 +947,14 @@ function CompanyIntelligence({ company, go, notify, openThesis }) {
                 <span className="flex flex-col"><span style={{ color: T.muted }}>Recommendation</span><span className="font-semibold" style={{ color: c.fit >= 85 ? T.green : T.accent }}>{c.fit >= 85 ? "Prioritize" : c.fit >= 75 ? "Research" : "Monitor"}</span></span>
               </div>
             </div>
-            <div className="w-56 rounded-sm p-2.5 flex flex-col justify-between" style={{ background: T.bg, border: `1px solid ${T.border}` }}>
+            <div className="w-60 p-3.5 flex flex-col justify-between" style={{ background: T.soft, borderRadius: 12 }}>
               <div>
                 <div className="text-xs font-medium" style={{ color: T.text }}>Deal team decision</div>
                 <div className="text-xs mb-2" style={{ color: T.muted }}>The score is a recommendation. Status changes only on a human decision.</div>
-                {decision && <div className="text-xs mb-2 px-1.5 py-1 rounded-sm" style={{ background: T.greenSoft, color: T.green }}>Recorded: {decision} (M. Ahmed, today)</div>}
+                {decision && <div className="text-xs mb-2 px-1.5 py-1 rounded-lg" style={{ background: T.greenSoft, color: T.green }}>Recorded: {decision} (M. Ahmed, today)</div>}
               </div>
               <div className="flex flex-col gap-1">
-                <Btn primary small onClick={() => { setDecision("Promote to Priority"); notify("Promoted to Priority. Relationship Agent will prepare introduction paths."); }}>Promote to Priority</Btn>
+                <Btn primary onClick={() => { setDecision("Promote to Priority"); notify("Promoted to Priority. Relationship Agent will prepare introduction paths."); }}>Promote to Priority</Btn>
                 <div className="flex gap-1"><Btn small onClick={() => { setDecision("Analyst review requested"); notify("Review request sent to deal team."); }}>Request review</Btn><Btn small onClick={() => { setDecision("Pass"); notify("Marked Pass. Reason required in CRM (conceptual)."); }}>Pass</Btn></div>
                 <Btn small icon={running ? Loader2 : Play} onClick={run} disabled={running}>{running ? "Refreshing" : ran ? "Re-run analysis" : "Run full analysis"}</Btn>
               </div>
@@ -916,8 +963,8 @@ function CompanyIntelligence({ company, go, notify, openThesis }) {
         </div>
       </Card>
       <Card pad={false}>
-        <div className="px-3 pt-1"><Tabs tabs={tabs} value={tab} onChange={setTab} /></div>
-        <div className="p-3">
+        <div className="px-5 pt-4"><Tabs tabs={tabs} value={tab} onChange={setTab} /></div>
+        <div className="p-5">
           {tab === "Overview" && (
             <div className="grid grid-cols-12 gap-4">
               <div className="col-span-8 space-y-3">
@@ -963,7 +1010,7 @@ function CompanyIntelligence({ company, go, notify, openThesis }) {
                   </ResponsiveContainer>
                 </div>
                 <table className="w-full text-xs">
-                  <tbody>{breakdown.map(([k, v]) => <tr key={k} style={{ borderBottom: `1px solid ${T.border}` }}><td className="py-0.5" style={{ color: T.muted }}>{k}</td><td className="py-0.5 w-20"><div className="h-1 rounded-sm" style={{ background: T.unknownSoft }}><div className="h-1 rounded-sm" style={{ width: `${v}%`, background: v >= 85 ? T.green : v >= 75 ? T.accent : T.amber }} /></div></td><td className="py-0.5 text-right tabular-nums font-medium w-8" style={{ color: v < 80 ? T.amber : T.text }}>{v}</td></tr>)}</tbody>
+                  <tbody>{breakdown.map(([k, v]) => <tr key={k} style={{ borderBottom: `1px solid ${T.border}` }}><td className="py-0.5" style={{ color: T.muted }}>{k}</td><td className="py-0.5 w-20"><div className="h-1 rounded-lg" style={{ background: T.unknownSoft }}><div className="h-1 rounded-lg" style={{ width: `${v}%`, background: v >= 85 ? T.green : v >= 75 ? T.accent : T.amber }} /></div></td><td className="py-0.5 text-right tabular-nums font-medium w-8" style={{ color: v < 80 ? T.amber : T.text }}>{v}</td></tr>)}</tbody>
                 </table>
                 <div className="text-xs mt-1.5" style={{ color: T.muted }}>Risk profile is held down by the unconfirmed customer concentration.</div>
               </div>
@@ -1031,14 +1078,14 @@ function CompanyIntelligence({ company, go, notify, openThesis }) {
           {tab === "Market" && (
             <div className="grid grid-cols-3 gap-3 text-xs">
               {[["End market", "Diagnostic instruments and drug-delivery devices. OEM outsourcing of validated components continues.", "confirmed"], ["Competitive position", "One of an estimated 30-40 US precision medical molders under $50M revenue with active ISO 13485.", "estimated"], ["Regional dynamics", "Northeast Ohio cluster of polymer and machining suppliers supports hiring and add-on options.", "inferred"]].map(([h, b, l]) => (
-                <div key={h} className="rounded-sm p-2.5" style={{ border: `1px solid ${T.border}` }}><div className="flex items-center justify-between mb-1"><span className="font-medium" style={{ color: T.text }}>{h}</span><Level level={l} small /></div><p style={{ color: T.muted }}>{b}</p></div>
+                <div key={h} className="rounded-lg p-2.5" style={{ border: `1px solid ${T.border}` }}><div className="flex items-center justify-between mb-1"><span className="font-medium" style={{ color: T.text }}>{h}</span><Level level={l} small /></div><p style={{ color: T.muted }}>{b}</p></div>
               ))}
             </div>
           )}
           {tab === "People" && (
             <div className="grid grid-cols-3 gap-3 text-xs">
               {[["Michael Reynolds", "Founder & CEO", "Founded 2004. Engineering background. Discussed succession at 2026 industry panel.", "inferred"], ["Dana Whitfield", "VP Sales (hired 2025)", "Previously regional sales lead at a larger contract manufacturer.", "inferred"], ["Operations leadership", "Unknown", "No public information on plant or quality leadership. Gap to close in first meeting.", "unknown"]].map(([n, r, b, l]) => (
-                <div key={n} className="rounded-sm p-2.5" style={{ border: `1px ${l === "unknown" ? "dashed" : "solid"} ${l === "unknown" ? T.unknown : T.border}` }}><div className="font-medium text-sm" style={{ color: T.text }}>{n}</div><div className="mb-1" style={{ color: T.muted }}>{r}</div><p style={{ color: T.muted }}>{b}</p><div className="mt-2 flex items-center justify-between"><Level level={l} small /><span style={{ color: T.unknown }}>Synthetic identity</span></div></div>
+                <div key={n} className="rounded-lg p-2.5" style={{ border: `1px ${l === "unknown" ? "dashed" : "solid"} ${l === "unknown" ? T.unknown : T.border}` }}><div className="font-medium text-sm" style={{ color: T.text }}>{n}</div><div className="mb-1" style={{ color: T.muted }}>{r}</div><p style={{ color: T.muted }}>{b}</p><div className="mt-2 flex items-center justify-between"><Level level={l} small /><span style={{ color: T.unknown }}>Synthetic identity</span></div></div>
               ))}
             </div>
           )}
@@ -1108,27 +1155,52 @@ function RelationshipPanel({ go }) {
 }
 
 function RelationshipIntelligence({ go, openCompany }) {
+  const [done, setDone] = useState({});
+  const due = COMPANIES.filter((c) => c.rel !== "No relationship");
   return (
     <div>
-      <PageHeader title="Relationship Intelligence" sub="Long-horizon view of owner relationships across the monitored universe. Proprietary sourcing compounds over years." crumbs={["Sourcing", "Relationship Intelligence"]} right={<Demo>Synthetic relationships</Demo>} />
-      <div className="grid grid-cols-4 gap-3 mb-4">
-        {[["Owners with any contact", "214"], ["Warm relationships", "38"], ["Succession signals (12 mo)", "2"], ["Follow-ups due this week", "9"]].map(([k, v]) => <Card key={k}><div className="text-xs" style={{ color: T.muted }}>{k}</div><div className="text-xl font-semibold tabular-nums mt-0.5" style={{ color: T.text }}>{v}</div></Card>)}
+      <PageHeader title="Relationship Intelligence" sub="Long-horizon view of owner relationships. Proprietary sourcing compounds over years." crumbs={["Sourcing", "Relationship Intelligence"]} demo="Synthetic relationships" />
+      <div className="grid grid-cols-4 gap-4" style={{ marginBottom: 24 }}>
+        <Metric k="Owners with any contact" v="214" />
+        <Metric k="Warm relationships" v="38" />
+        <Metric k="Succession signals, 12 months" v="2" color={T.amber} />
+        <Metric k="Follow-ups due this week" v={String(due.length)} />
       </div>
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="col-span-2">
-          <SectionTitle>Precision MedTech Solutions</SectionTitle>
-          <RelationshipPanel go={go} />
-        </Card>
-        <Card>
-          <SectionTitle>Follow-ups due</SectionTitle>
-          {COMPANIES.filter((c) => c.rel !== "No relationship").map((c) => (
-            <button key={c.id} onClick={() => openCompany(c.id)} className="w-full text-left py-2 hover:bg-stone-50" style={{ borderBottom: `1px solid ${T.border}` }}>
-              <div className="text-sm font-medium" style={{ color: T.text }}>{c.name}</div>
-              <div className="text-xs" style={{ color: T.muted }}>{c.rel}. Suggested: quarterly check-in on {c.signal.toLowerCase()}.</div>
-            </button>
-          ))}
-        </Card>
-      </div>
+      <Card style={{ marginBottom: 24 }}>
+        <SectionTitle right={<span style={{ color: T.muted, fontSize: 12 }}>Precision MedTech Solutions</span>}>Relationship timeline</SectionTitle>
+        <div className="grid gap-8" style={{ gridTemplateColumns: "65fr 35fr" }}>
+          <div className="relative pl-6">
+            <div className="absolute left-2 top-1 bottom-1 w-px" style={{ background: T.border }} />
+            {TIMELINE.map((t) => (
+              <div key={t.y} className="relative" style={{ marginBottom: 16 }}>
+                <div className="absolute -left-4 top-1.5 w-2.5 h-2.5 rounded-full" style={{ background: t.level === "confirmed" ? T.green : T.accent, marginLeft: -1 }} />
+                <div className="tabular-nums" style={{ color: T.muted, fontSize: 11 }}>{t.y}</div>
+                <div className="flex items-center gap-2" style={{ color: T.text, fontSize: 13 }}>{t.t}<Level level={t.level} small /></div>
+              </div>
+            ))}
+            <div className="p-3" style={{ background: T.accentSoft, color: T.accent, borderRadius: 10, fontSize: 12 }}>The system helps humans manage long-term relationships. It does not contact owners on its own.</div>
+          </div>
+          <div style={{ background: T.soft, borderRadius: 12, padding: 18 }}>
+            {[["Relationship strength", "Low", T.amber], ["Best entry point", "Founder / CEO"], ["Warm connections", "2"], ["Next action", "Identify introduction path"]].map(([k, v, c]) => <div key={k} style={{ marginBottom: 12 }}><div style={{ color: T.muted, fontSize: 11 }}>{k}</div><div className="font-semibold" style={{ color: c || T.text, fontSize: 14 }}>{v}</div></div>)}
+            <Btn primary icon={Send} onClick={() => go("outreach")}>Prepare outreach brief</Btn>
+          </div>
+        </div>
+      </Card>
+      <Card pad={false}>
+        <div className="px-4 pt-4"><SectionTitle>Follow-ups due</SectionTitle></div>
+        <table className="w-full" style={{ fontSize: 13 }}>
+          <thead><tr style={{ color: T.muted, fontSize: 11 }}>{["", "Company", "Suggested follow-up", "Due", "Status"].map((h) => <th key={h} className="text-left font-medium px-4 py-1.5" style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
+          <tbody>{due.map((c, i) => (
+            <tr key={c.id} style={{ borderBottom: `1px solid ${T.border}`, opacity: done[c.id] ? 0.5 : 1 }}>
+              <td className="px-4 py-2.5" style={{ width: 32 }}><input type="checkbox" checked={!!done[c.id]} onChange={() => setDone({ ...done, [c.id]: !done[c.id] })} /></td>
+              <td className="px-4 py-2.5 font-medium cursor-pointer" style={{ color: T.text }} onClick={() => openCompany(c.id)}>{c.name}</td>
+              <td className="px-4 py-2.5" style={{ color: T.muted }}>Quarterly check-in on {c.signal.toLowerCase()}</td>
+              <td className="px-4 py-2.5 tabular-nums" style={{ color: i < 2 ? T.amber : T.muted }}>{["Today", "Tomorrow", "Fri", "Next week", "Next week"][i]}</td>
+              <td className="px-4 py-2.5" style={{ color: T.muted, fontSize: 12 }}>{c.rel}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </Card>
     </div>
   );
 }
@@ -1148,7 +1220,7 @@ function Outreach({ notify }) {
   useEffect(() => { setText(drafts[tone]); setApproved(false); }, [tone]);
   return (
     <div>
-      <PageHeader title="Outreach" sub="AI-prepared research brief and draft. A human approves every message before it leaves the firm." crumbs={["Sourcing", "Outreach"]} right={<Demo>No email is sent in this prototype</Demo>} />
+      <PageHeader title="Outreach" sub="AI-prepared research brief and draft. A human approves every message before it leaves the firm." crumbs={["Sourcing", "Outreach"]} demo="No email is sent" />
       <div className="grid grid-cols-5 gap-4">
         <div className="col-span-2 space-y-4">
           <Card>
@@ -1171,14 +1243,14 @@ function Outreach({ notify }) {
           <Card>
             <SectionTitle>Controls</SectionTitle>
             <div className="text-xs font-medium mb-1" style={{ color: T.muted }}>Tone</div>
-            <div className="flex gap-1.5 mb-3">{Object.keys(drafts).map((t) => <button key={t} onClick={() => setTone(t)} className="text-xs px-2.5 py-1 rounded" style={{ border: `1px solid ${tone === t ? T.accent : T.border}`, background: tone === t ? T.accentSoft : "#fff", color: tone === t ? T.accent : T.text }}>{t}</button>)}</div>
+            <div className="flex gap-1.5 mb-3">{Object.keys(drafts).map((t) => <button key={t} onClick={() => setTone(t)} className="text-xs px-3 py-1.5" style={{ borderRadius: R.chip, border: `1px solid ${tone === t ? T.accent : T.border}`, background: tone === t ? T.accentSoft : "#fff", color: tone === t ? T.accent : T.text }}>{t}</button>)}</div>
             <div className="text-xs font-medium mb-1" style={{ color: T.muted }}>Objective</div>
-            <div className="flex gap-1.5">{["Introduction", "Industry Discussion", "MCM Overview"].map((t) => <button key={t} onClick={() => setObj(t)} className="text-xs px-2.5 py-1 rounded" style={{ border: `1px solid ${obj === t ? T.accent : T.border}`, background: obj === t ? T.accentSoft : "#fff", color: obj === t ? T.accent : T.text }}>{t}</button>)}</div>
+            <div className="flex gap-1.5">{["Introduction", "Industry Discussion", "MCM Overview"].map((t) => <button key={t} onClick={() => setObj(t)} className="text-xs px-3 py-1.5" style={{ borderRadius: R.chip, border: `1px solid ${obj === t ? T.accent : T.border}`, background: obj === t ? T.accentSoft : "#fff", color: obj === t ? T.accent : T.text }}>{t}</button>)}</div>
           </Card>
         </div>
         <Card className="col-span-3 flex flex-col">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2"><span className="text-xs px-2 py-0.5 rounded-sm" style={{ background: T.amberSoft, color: T.amber, border: `1px solid ${T.amber}55` }}>Draft. Not sent. Requires approval by C. Hren</span></div>
+            <div className="flex items-center gap-2"><span className="text-xs px-2 py-0.5 rounded-lg" style={{ background: T.amberSoft, color: T.amber, border: `1px solid ${T.amber}55` }}>Draft. Not sent. Requires approval by C. Hren</span></div>
             <span className="text-xs" style={{ color: T.muted }}>Objective: {obj}</span>
           </div>
           {editing ? <textarea value={text} onChange={(e) => setText(e.target.value)} rows={14} className="w-full text-sm p-3 rounded outline-none flex-1 focus:ring-2 focus:ring-blue-200" style={{ border: `1px solid ${T.accent}`, color: T.text, whiteSpace: "pre-wrap" }} />
@@ -1198,29 +1270,37 @@ function Outreach({ notify }) {
 
 /* ---------- Deal Pipeline ---------- */
 function Pipeline({ go }) {
-  const stages = ["Initial Review", "NDA", "CIM Received", "Management Meeting", "LOI", "Diligence", "Investment Committee"];
+  const groups = [["Early stage", ["Initial Review", "NDA", "CIM Received"]], ["Evaluation", ["Management Meeting", "LOI"]], ["Execution", ["Diligence", "Investment Committee"]]];
   return (
     <div>
-      <PageHeader title="Deal Pipeline" sub="Active opportunities by stage. Cards show the key open risk and what the agents have completed." crumbs={["Deals", "Deal Pipeline"]} right={<Demo>5 synthetic projects</Demo>} />
-      <div className="grid grid-cols-7 gap-2">
-        {stages.map((s) => {
-          const items = DEALS.filter((d) => d.stage === s);
-          return (
-            <div key={s} className="rounded-sm p-1.5 min-h-[320px]" style={{ background: "#f0efeb", border: `1px solid ${T.border}` }}>
-              <div className="flex items-center justify-between mb-2 px-1"><span className="text-xs font-medium" style={{ color: T.text }}>{s}</span><span className="text-xs tabular-nums" style={{ color: T.muted }}>{items.length}</span></div>
-              {items.map((d) => (
-                <button key={d.name} onClick={() => go(d.name === "Project Falcon" ? "cim" : "pipeline")} className="w-full text-left bg-white rounded-sm p-2 mb-1.5 hover:bg-stone-50" style={{ border: `1px solid ${T.border}` }}>
-                  <div className="text-sm font-semibold" style={{ color: T.text }}>{d.name}</div>
-                  <div className="text-xs" style={{ color: T.muted }}>{d.sector}</div>
-                  <div className="text-xs mt-1.5 tabular-nums" style={{ color: T.text }}>EV {d.ev}</div>
-                  <div className="text-xs" style={{ color: T.muted }}>{d.owner}, {d.days}d in stage</div>
-                  <div className="text-xs mt-1.5 flex items-start gap-1" style={{ color: T.amber }}><AlertTriangle size={11} className="mt-0.5 shrink-0" /> {d.risk}</div>
-                  <div className="text-xs mt-1 flex items-start gap-1" style={{ color: T.accent }}><Bot size={11} className="mt-0.5 shrink-0" /> {d.ai}</div>
-                </button>
-              ))}
+      <PageHeader title="Deal Pipeline" sub="Active opportunities by stage. Cards show the key open risk and what has been completed." crumbs={["Deals", "Deal Pipeline"]} demo="5 synthetic projects" />
+      <div className="grid grid-cols-3 gap-4">
+        {groups.map(([g, stages]) => (
+          <div key={g}>
+            <div style={{ fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase", color: T.muted, marginBottom: 8 }}>{g}</div>
+            <div className="p-2" style={{ background: T.soft, borderRadius: 16, minHeight: 360 }}>
+              {stages.map((s) => {
+                const items = DEALS.filter((d) => d.stage === s);
+                return (
+                  <div key={s} style={{ marginBottom: 12 }}>
+                    <div className="flex items-center justify-between px-1" style={{ marginBottom: 6 }}><span style={{ fontSize: 12, fontWeight: 600, color: T.text }}>{s}</span><span className="tabular-nums" style={{ fontSize: 11, color: T.muted }}>{items.length}</span></div>
+                    {items.length === 0 && <div className="px-2 py-1.5" style={{ fontSize: 11, color: T.unknown, border: `1px dashed ${T.border}`, borderRadius: 6 }}>Empty</div>}
+                    {items.map((d) => (
+                      <button key={d.name} onClick={() => go(d.name === "Project Falcon" ? "cim" : "pipeline")} className="w-full text-left bg-white" style={{ borderRadius: 12, padding: "12px 14px", marginBottom: 8, boxShadow: SHADOW, transition: EASE }} onMouseEnter={(e) => { e.currentTarget.style.boxShadow = SHADOW_HOVER; e.currentTarget.style.transform = "translateY(-2px)"; }} onMouseLeave={(e) => { e.currentTarget.style.boxShadow = SHADOW; e.currentTarget.style.transform = "none"; }}>
+                        <div style={{ fontSize: 11, letterSpacing: "0.05em", textTransform: "uppercase", color: T.muted }}>{d.name.replace("Project ", "Project ")}</div>
+                        <div style={{ fontSize: 13, color: T.text, fontWeight: 500 }}>{d.sector}</div>
+                        <div className="tabular-nums" style={{ fontSize: 16, fontWeight: 650, color: T.text, marginTop: 6 }}>{d.ev} <span style={{ fontSize: 11, color: T.muted, fontWeight: 400 }}>EV</span></div>
+                        <div style={{ fontSize: 11.5, color: T.muted, marginTop: 2 }}>{d.owner} · Day {d.days}</div>
+                        <div className="flex items-start gap-1.5" style={{ fontSize: 12, color: T.red, marginTop: 8 }}><span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: T.red }} />{d.risk}</div>
+                        <div style={{ fontSize: 11.5, color: T.muted, marginTop: 4 }}>{d.ai}</div>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -1238,7 +1318,7 @@ const CIM_EXCERPTS = {
 function CIMAnalyzer({ go, notify }) {
   const [src, setSrc] = useState("CIM p. 48");
   const [review, setReview] = useState({});
-  const Cite = ({ p }) => <button onClick={() => setSrc(p)} className="tabular-nums ml-1 px-1 rounded-sm" style={{ color: T.accent, background: src === p ? T.accentSoft : "transparent", border: `1px solid ${src === p ? T.accent + "55" : "transparent"}` }}>{p}</button>;
+  const Cite = ({ p }) => <button onClick={() => setSrc(p)} className="tabular-nums ml-1 px-1 rounded-lg" style={{ color: T.accent, background: src === p ? T.accentSoft : "transparent", border: `1px solid ${src === p ? T.accent + "55" : "transparent"}` }}>{p}</button>;
   const fin = [
     ["Revenue", "$32.9M", "$35.3M", "$38.2M", "8.1%", "CIM p. 23", "confirmed"],
     ["Gross profit", "$11.0M", "$12.1M", "$13.5M", "11.6%", "CIM p. 23", "confirmed"],
@@ -1270,19 +1350,19 @@ function CIMAnalyzer({ go, notify }) {
       <div className="flex items-center gap-1 text-xs mb-2" style={{ color: T.muted }}>
         <span>Deals</span><ChevronRight size={12} /><button onClick={() => go("pipeline")} className="hover:underline">Deal Pipeline</button><ChevronRight size={12} /><span style={{ color: T.text }}>Project Falcon</span><ChevronRight size={12} /><span style={{ color: T.text }}>Preliminary CIM review</span>
       </div>
-      <Card pad={false} className="mb-3">
+      <Card pad={false} style={{ marginBottom: 24 }}>
         <div className="flex items-stretch">
-          <div className="flex-1 p-3" style={{ borderRight: `1px solid ${T.border}` }}>
+          <div className="flex-1 p-5" style={{ borderRight: `1px solid ${T.border}` }}>
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-lg font-semibold tracking-tight leading-tight" style={{ color: T.text }}>Project Falcon</h1>
+                <h1 className="tracking-tight leading-tight" style={{ color: T.text, fontSize: 24, fontWeight: 700, margin: 0 }}>Project Falcon</h1>
                 <div className="text-xs mt-0.5" style={{ color: T.muted }}>Falcon Precision Technologies. Aerospace precision components. Received via intermediary. Stage: Diligence.</div>
-                <div className="flex items-center gap-1.5 mt-2">{["142-page CIM", "AS9100", "Aerospace Precision Components thesis", "Two facilities"].map((t) => <span key={t} className="text-xs px-1.5 py-0.5 rounded-sm" style={{ border: `1px solid ${T.border}`, color: T.text }}>{t}</span>)}</div>
+                <div className="flex items-center gap-1.5 mt-2">{["142-page CIM", "AS9100", "Aerospace Precision Components thesis", "Two facilities"].map((t) => <span key={t} className="text-xs px-1.5 py-0.5 rounded-lg" style={{ border: `1px solid ${T.border}`, color: T.text }}>{t}</span>)}</div>
               </div>
               <Demo>Synthetic CIM and citations</Demo>
             </div>
           </div>
-          <div className="w-80 p-3 grid grid-cols-2 gap-x-4 text-xs">
+          <div className="w-80 p-5 grid grid-cols-2 gap-x-5">
             <KV k="Investment fit" v={<span style={{ color: T.green }}>Strong</span>} />
             <KV k="Extraction confidence" v="87%" />
             <KV k="Pages cited" v="41 of 142" />
@@ -1338,7 +1418,7 @@ function CIMAnalyzer({ go, notify }) {
           </Card>
           <Card pad={false}>
             <div className="px-3 py-1.5 text-xs font-medium" style={{ borderBottom: `1px solid ${T.border}`, background: "#fafaf8", color: T.text }}>Pages referenced</div>
-            <div className="p-2 grid grid-cols-3 gap-1">{Object.keys(CIM_EXCERPTS).map((p) => <button key={p} onClick={() => setSrc(p)} className="text-xs px-1.5 py-1 rounded-sm tabular-nums" style={{ border: `1px solid ${src === p ? T.accent : T.border}`, color: src === p ? T.accent : T.text }}>{p.replace("CIM ", "")}</button>)}</div>
+            <div className="p-2 grid grid-cols-3 gap-1">{Object.keys(CIM_EXCERPTS).map((p) => <button key={p} onClick={() => setSrc(p)} className="text-xs px-1.5 py-1 rounded-lg tabular-nums" style={{ border: `1px solid ${src === p ? T.accent : T.border}`, color: src === p ? T.accent : T.text }}>{p.replace("CIM ", "")}</button>)}</div>
           </Card>
           <Card>
             <div className="text-xs font-medium mb-1" style={{ color: T.text }}>Analyst sign-off</div>
@@ -1362,99 +1442,101 @@ function RedTeam({ go }) {
   const [disp, setDisp] = useState({});
   const run = () => { setPhase("running"); setTimeout(() => setPhase("done"), 1500); };
   const A = [
-    { a: "Aerospace growth will remain strong.", ch: "67% of projected growth depends on two programs. A delay on either program removes most of the plan's upside.", ev: ["CIM p. 58", "Market Research #14"], sev: "Medium", test: "Program schedule sensitivity: 18-month slip on one program reduces FY2028 revenue from $53M to $46M." },
-    { a: "Customer relationships are highly durable.", ch: "Top customer accounts for 31% of sales and the current agreement expires within 24 months of an expected close. Renewal pricing is not disclosed.", ev: ["CIM p. 48", "Contract summary (data room)"], sev: "High", test: "Prior renewals: no pricing history in CIM. Requested from management." },
-    { a: "EBITDA adjustments are reasonable.", ch: "$740K of adjusted EBITDA relates to items that may recur: relocation costs have appeared in two of the last three years.", ev: ["CIM p. 71", "Quality of earnings draft"], sev: "High", test: "FY2023 and FY2024 adjustments include $180K and $210K of similar items." },
+    { a: "Aerospace growth will remain strong.", ch: "67% of projected growth depends on two programs. A delay on either removes most of the plan's upside.", ev: ["CIM p. 58", "Market Research #14"], sev: "Medium", test: "18-month slip on one program reduces FY2028 revenue from $53M to $46M." },
+    { a: "Customer relationships are highly durable.", ch: "Top customer is 31% of sales; the agreement expires within 24 months of an expected close. Renewal pricing is not disclosed.", ev: ["CIM p. 48", "Contract summary (data room)"], sev: "High", test: "Prior renewals: no pricing history in CIM. Requested from management." },
+    { a: "EBITDA adjustments are reasonable.", ch: "$740K of adjusted EBITDA relates to items that may recur; relocation costs appeared in two of the last three years.", ev: ["CIM p. 71", "Quality of earnings draft"], sev: "High", test: "FY2023 and FY2024 adjustments include $180K and $210K of similar items." },
   ];
-  const bg = "#1e2330", panel = "#262c3a", line = "#343b4b", text = "#e4e7ee", mutedD = "#8e97ab", warn = "#d6857a", amberD = "#d9b46e", greenD = "#7fc59f";
-  const DBtn = ({ children, onClick, active, disabled }) => <button onClick={onClick} disabled={disabled} className="text-xs px-2 py-0.5 rounded-sm disabled:opacity-40" style={{ border: `1px solid ${active ? text : line}`, color: active ? bg : text, background: active ? text : "transparent" }}>{children}</button>;
+  const bg = "#182231", panel = "#202C3D", line = "#2C3A4E", text = "#E6EAF0", mutedD = "#93A0B4", link = "#8FB6E3", warn = "#E07A6C", amberD = "#E0B36C", greenD = "#7FC59F";
+  const DBtn = ({ children, onClick, active }) => <button onClick={onClick} style={{ fontSize: 11.5, padding: "4px 9px", borderRadius: 6, border: `1px solid ${active ? text : line}`, color: active ? bg : text, background: active ? text : "transparent" }}>{children}</button>;
   const disposed = Object.keys(disp).length;
   return (
-    <div className="rounded-sm p-4 -m-1" style={{ background: bg, minHeight: "calc(100vh - 80px)", color: text }}>
-      <div className="flex items-start justify-between mb-3">
+    <div style={{ background: bg, minHeight: "calc(100vh - 80px)", color: text, borderRadius: R.hero, padding: 28, margin: -4 }}>
+      <div className="flex items-start justify-between" style={{ marginBottom: 24 }}>
         <div>
-          <div className="flex items-center gap-1 text-xs mb-1" style={{ color: mutedD }}><span>Deals</span><ChevronRight size={12} /><button onClick={() => go("cim")} className="hover:underline">Project Falcon</button><ChevronRight size={12} /><span style={{ color: text }}>Red Team review</span></div>
-          <h1 className="text-lg font-semibold tracking-tight">Red Team Analysis</h1>
-          <p className="text-xs mt-0.5" style={{ color: mutedD }}>Independent challenge to the current investment thesis. The reviewing agent is instructed to find contrary evidence, not to confirm the case.</p>
+          <div className="flex items-center gap-1" style={{ color: mutedD, fontSize: 12, marginBottom: 6 }}><span>Deals</span><ChevronRight size={12} /><button onClick={() => go("cim")} className="hover:underline">Project Falcon</button><ChevronRight size={12} /><span style={{ color: text }}>Red Team</span></div>
+          <div className="flex items-center gap-3">
+            <span style={{ fontSize: 10.5, letterSpacing: "0.12em", padding: "3px 8px", borderRadius: 4, background: "rgba(224,122,108,0.15)", color: warn, fontWeight: 600 }}>ADVERSARIAL REVIEW</span>
+            <h1 className="tracking-tight" style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Red Team Analysis</h1>
+          </div>
+          <p style={{ color: mutedD, fontSize: 13, margin: "4px 0 0" }}>Independent challenge to the investment thesis. The reviewing agent is instructed to find contrary evidence, not to confirm the case.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs px-1.5 py-0.5 rounded-sm" style={{ background: panel, color: mutedD, border: `1px solid ${line}` }}>Synthetic analysis</span>
-          {phase !== "done" && <button onClick={run} disabled={phase === "running"} className="text-xs px-2.5 py-1 rounded-sm font-medium flex items-center gap-1.5 disabled:opacity-60" style={{ background: text, color: bg }}>{phase === "running" ? <Loader2 size={12} className="animate-spin" /> : <ShieldAlert size={12} />}{phase === "running" ? "Reviewing" : "Run Red Team review"}</button>}
+        <div className="flex items-center gap-3">
+          {phase === "done" && <div className="text-right"><div style={{ fontSize: 20, fontWeight: 650, lineHeight: 1 }}>3 findings</div><div style={{ fontSize: 12, color: mutedD }}><span style={{ color: warn }}>2 High</span> · <span style={{ color: amberD }}>1 Medium</span></div></div>}
+          <span style={{ fontSize: 11, padding: "2px 7px", borderRadius: 4, background: panel, color: mutedD }}>Synthetic analysis</span>
+          {phase !== "done" && <button onClick={run} disabled={phase === "running"} className="flex items-center gap-1.5 font-medium disabled:opacity-60" style={{ fontSize: 13, padding: "6px 12px", borderRadius: 6, background: T.accent, color: "#fff" }}>{phase === "running" ? <Loader2 size={13} className="animate-spin" /> : <ShieldAlert size={13} />}{phase === "running" ? "Reviewing" : "Run Red Team review"}</button>}
         </div>
       </div>
-      <div className="grid grid-cols-12 gap-3 mb-3">
-        <div className="col-span-8 rounded-sm p-3" style={{ background: panel, border: `1px solid ${line}` }}>
-          <div className="text-xs mb-1" style={{ color: mutedD }}>Thesis under review (from IC memo draft v3)</div>
-          <p className="text-sm">"Falcon represents a high-quality precision manufacturer benefiting from durable aerospace demand and strong technical barriers."</p>
+      <div className="grid grid-cols-12 gap-4" style={{ marginBottom: 24 }}>
+        <div className="col-span-8 p-4" style={{ background: panel, borderRadius: 12 }}>
+          <div style={{ color: mutedD, fontSize: 11, marginBottom: 4 }}>Thesis under review (IC memo draft v3)</div>
+          <p style={{ fontSize: 15, margin: 0, lineHeight: 1.5 }}>"Falcon represents a high-quality precision manufacturer benefiting from durable aerospace demand and strong technical barriers."</p>
         </div>
-        <div className="col-span-4 rounded-sm p-3 text-xs grid grid-cols-2 gap-x-3" style={{ background: panel, border: `1px solid ${line}` }}>
-          {[["Reviewer", "Red-Team Agent v2"], ["Scope", "CIM, data room, market research"], ["Sources checked", "3 documents, 14 notes"], ["Deal team response", phase === "done" ? `${disposed} of 3 findings` : "Not started"]].map(([k, v]) => <div key={k} className="py-0.5" style={{ borderBottom: `1px solid ${line}` }}><div style={{ color: mutedD }}>{k}</div><div>{v}</div></div>)}
+        <div className="col-span-4 p-4 grid grid-cols-2 gap-x-4 gap-y-2" style={{ background: panel, borderRadius: 12, fontSize: 12 }}>
+          {[["Reviewer", "Red-Team Agent v2"], ["Scope", "CIM, data room, research"], ["Sources checked", "3 documents, 14 notes"], ["Deal team response", phase === "done" ? `${disposed} of 3 findings` : "Not started"]].map(([k, v]) => <div key={k}><div style={{ color: mutedD, fontSize: 11 }}>{k}</div><div>{v}</div></div>)}
         </div>
       </div>
       {phase === "idle" && (
-        <div className="rounded-sm p-8 text-center text-xs" style={{ border: `1px dashed ${line}`, color: mutedD }}>
-          <div className="text-sm" style={{ color: text }}>No Red Team review exists for thesis version 3</div>
-          <div className="mt-1">The review extracts assumptions, searches for contrary evidence, tests each assumption against prior-year data, and issues a verdict with critical questions for the deal team.</div>
+        <div className="p-10 text-center" style={{ border: `1px dashed ${line}`, borderRadius: 8, color: mutedD, fontSize: 13 }}>
+          <div style={{ color: text, fontSize: 14, fontWeight: 500 }}>No Red Team review exists for thesis version 3</div>
+          <div style={{ marginTop: 4 }}>The review extracts assumptions, searches for contrary evidence, tests each against prior-year data, and issues a verdict with critical questions.</div>
         </div>
       )}
       {phase === "running" && (
-        <div className="rounded-sm p-3 space-y-1.5 text-xs" style={{ background: panel, border: `1px solid ${line}` }}>
-          {["Extracting explicit and implicit assumptions from the thesis", "Searching CIM and data room for contrary evidence", "Testing EBITDA adjustments against FY2023 and FY2024", "Scoring severity and drafting verdict"].map((s) => <div key={s} className="flex items-center gap-2"><Loader2 size={12} className="animate-spin" style={{ color: mutedD }} /> {s}</div>)}
+        <div className="p-4 space-y-2" style={{ background: panel, borderRadius: 12, fontSize: 13 }}>
+          {["Extracting explicit and implicit assumptions from the thesis", "Searching CIM and data room for contrary evidence", "Testing EBITDA adjustments against FY2023 and FY2024", "Scoring severity and drafting verdict"].map((s) => <div key={s} className="flex items-center gap-2"><Loader2 size={13} className="animate-spin" style={{ color: mutedD }} /> {s}</div>)}
         </div>
       )}
       {phase === "done" && (
         <>
-          <div className="rounded-sm mb-3 overflow-hidden" style={{ border: `1px solid ${line}` }}>
-            <table className="w-full text-xs">
-              <thead><tr style={{ background: panel, color: mutedD }}>{["#", "Assumption in thesis", "Challenge", "Test performed", "Contrary evidence", "Severity", "Deal team disposition"].map((h) => <th key={h} className="text-left font-medium px-3 py-1.5" style={{ borderBottom: `1px solid ${line}` }}>{h}</th>)}</tr></thead>
-              <tbody>{A.map((x, i) => (
-                <tr key={i} style={{ borderBottom: `1px solid ${line}`, background: i % 2 ? "#212633" : "transparent" }}>
-                  <td className="px-3 py-2 tabular-nums align-top" style={{ color: mutedD }}>{i + 1}</td>
-                  <td className="px-3 py-2 align-top font-medium" style={{ width: 180 }}>{x.a}</td>
-                  <td className="px-3 py-2 align-top" style={{ color: warn, width: 260 }}>{x.ch}</td>
-                  <td className="px-3 py-2 align-top" style={{ color: mutedD, width: 220 }}>{x.test}</td>
-                  <td className="px-3 py-2 align-top"><div className="flex flex-col gap-1">{x.ev.map((e) => <span key={e} className="tabular-nums" style={{ color: text }}>{e}</span>)}</div></td>
-                  <td className="px-3 py-2 align-top"><span className="font-semibold" style={{ color: x.sev === "High" ? warn : amberD }}>{x.sev}</span></td>
-                  <td className="px-3 py-2 align-top"><div className="flex flex-wrap gap-1">{["Requires resolution", "Accept risk", "Reject finding"].map((d) => <DBtn key={d} active={disp[i] === d} onClick={() => setDisp({ ...disp, [i]: d })}>{d}</DBtn>)}</div></td>
-                </tr>
-              ))}</tbody>
-            </table>
+          <div className="grid grid-cols-3 gap-4" style={{ marginBottom: 24 }}>
+            {A.map((x, i) => (
+              <div key={i} className="p-4 flex flex-col" style={{ background: panel, borderRadius: 12, borderTop: `3px solid ${x.sev === "High" ? warn : amberD}` }}>
+                <div className="flex items-center justify-between" style={{ marginBottom: 8 }}><span className="tabular-nums" style={{ color: mutedD, fontSize: 11 }}>0{i + 1}</span><span style={{ fontSize: 11, fontWeight: 600, color: x.sev === "High" ? warn : amberD, letterSpacing: "0.06em" }}>{x.sev.toUpperCase()}</span></div>
+                <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.35, marginBottom: 12 }}>{x.a}</div>
+                <div style={{ color: mutedD, fontSize: 11, marginBottom: 2 }}>Challenge</div>
+                <div style={{ fontSize: 13, lineHeight: 1.5, marginBottom: 10 }}>{x.ch}</div>
+                <div style={{ color: mutedD, fontSize: 11, marginBottom: 2 }}>Evidence</div>
+                <div className="flex gap-1.5 flex-wrap" style={{ marginBottom: 10 }}>{x.ev.map((e) => <span key={e} className="tabular-nums" style={{ fontSize: 11.5, padding: "2px 7px", borderRadius: 4, background: "rgba(143,182,227,0.12)", color: link }}>{e}</span>)}</div>
+                <div style={{ color: mutedD, fontSize: 11, marginBottom: 2 }}>Test</div>
+                <div style={{ fontSize: 12.5, color: mutedD, lineHeight: 1.5, marginBottom: 14 }}>{x.test}</div>
+                <div className="mt-auto pt-3" style={{ borderTop: `1px solid ${line}` }}>
+                  <div style={{ color: mutedD, fontSize: 11, marginBottom: 6 }}>Deal team disposition</div>
+                  <div className="flex flex-wrap gap-1.5">{["Requires resolution", "Accept risk", "Reject finding"].map((d) => <DBtn key={d} active={disp[i] === d} onClick={() => setDisp({ ...disp, [i]: d })}>{d}</DBtn>)}</div>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="grid grid-cols-12 gap-3 mb-3">
-            <div className="col-span-8 rounded-sm p-3" style={{ background: panel, border: `1px solid ${line}` }}>
-              <div className="flex items-center justify-between mb-1"><span className="text-xs" style={{ color: mutedD }}>Verdict</span><span className="text-xs" style={{ color: mutedD }}>Confidence 84%. Advisory only; the investment team decides.</span></div>
-              <div className="text-base font-semibold">Investable, but three items require resolution before a binding offer</div>
-              <div className="text-xs mt-2 mb-1" style={{ color: mutedD }}>Critical questions for management</div>
-              <ol className="list-decimal pl-5 text-xs space-y-1">
+          <div className="grid grid-cols-12 gap-4" style={{ marginBottom: 24 }}>
+            <div className="col-span-8 p-4" style={{ background: panel, borderRadius: 12 }}>
+              <div className="flex items-center justify-between" style={{ marginBottom: 4 }}><span style={{ color: mutedD, fontSize: 11 }}>Verdict</span><span style={{ color: mutedD, fontSize: 11 }}>Confidence 84%. Advisory only; the investment team decides.</span></div>
+              <div style={{ fontSize: 18, fontWeight: 650 }}>Investable, but three items require resolution before a binding offer</div>
+              <div style={{ color: mutedD, fontSize: 11, margin: "12px 0 4px" }}>Critical questions for management</div>
+              <ol className="list-decimal pl-5 space-y-1" style={{ fontSize: 13 }}>
                 <li>What are Customer A's renewal terms, and has pricing been renegotiated in prior renewals?</li>
                 <li>Which of the $740K adjustments recurred in FY2023 or FY2024, and why?</li>
                 <li>What is the downside case if one of the two growth programs slips by 18 months?</li>
               </ol>
             </div>
-            <div className="col-span-4 rounded-sm p-3 flex flex-col justify-between" style={{ background: panel, border: `1px solid ${line}` }}>
-              <div className="text-xs">
-                <div style={{ color: mutedD }}>Severity summary</div>
-                {[["High", 2, warn], ["Medium", 1, amberD], ["Low", 0, greenD]].map(([k, v, c]) => <div key={k} className="flex items-center justify-between py-1" style={{ borderBottom: `1px solid ${line}` }}><span>{k}</span><span className="tabular-nums font-semibold" style={{ color: c }}>{v}</span></div>)}
-                <div className="mt-2" style={{ color: mutedD }}>{disposed < 3 ? `${3 - disposed} finding${3 - disposed > 1 ? "s" : ""} awaiting deal team disposition` : "All findings dispositioned"}</div>
-              </div>
-              <div className="flex flex-col gap-1.5 mt-3">
-                <button onClick={() => setCompare(!compare)} className="text-xs px-2.5 py-1 rounded-sm font-medium flex items-center justify-center gap-1.5" style={{ background: text, color: bg }}><GitCompare size={12} /> {compare ? "Hide bull vs bear" : "Compare bull vs bear case"}</button>
-                <button onClick={() => go("diligence")} className="text-xs px-2.5 py-1 rounded-sm flex items-center justify-center gap-1.5" style={{ border: `1px solid ${line}`, color: text }}><ClipboardCheck size={12} /> Push questions to diligence tracker</button>
+            <div className="col-span-4 p-4 flex flex-col justify-between" style={{ background: panel, borderRadius: 12 }}>
+              <div style={{ fontSize: 13, color: mutedD }}>{disposed < 3 ? `${3 - disposed} finding${3 - disposed > 1 ? "s" : ""} awaiting deal team disposition` : "All findings dispositioned"}</div>
+              <div className="flex flex-col gap-2 mt-4">
+                <button onClick={() => setCompare(!compare)} className="flex items-center justify-center gap-1.5 font-medium" style={{ fontSize: 13, padding: "7px 12px", borderRadius: 6, background: T.accent, color: "#fff" }}><GitCompare size={13} /> {compare ? "Hide bull vs bear" : "Compare bull vs bear case"}</button>
+                <button onClick={() => go("diligence")} className="flex items-center justify-center gap-1.5" style={{ fontSize: 13, padding: "7px 12px", borderRadius: 6, border: `1px solid ${line}`, color: text }}><ClipboardCheck size={13} /> Push questions to diligence</button>
               </div>
             </div>
           </div>
           {compare && (
-            <div className="rounded-sm overflow-hidden" style={{ border: `1px solid ${line}` }}>
-              <table className="w-full text-xs">
-                <thead><tr style={{ background: panel }}><th className="text-left font-medium px-3 py-1.5" style={{ color: mutedD, borderBottom: `1px solid ${line}`, width: 160 }}>Dimension</th><th className="text-left font-medium px-3 py-1.5" style={{ color: greenD, borderBottom: `1px solid ${line}` }}>Investment case</th><th className="text-left font-medium px-3 py-1.5" style={{ color: warn, borderBottom: `1px solid ${line}` }}>Red Team case</th><th className="text-right font-medium px-3 py-1.5" style={{ color: mutedD, borderBottom: `1px solid ${line}` }}>Delta</th></tr></thead>
+            <div className="overflow-hidden" style={{ background: panel, borderRadius: 12 }}>
+              <table className="w-full" style={{ fontSize: 13 }}>
+                <thead><tr><th className="text-left font-medium px-4 py-2.5" style={{ color: mutedD, borderBottom: `1px solid ${line}`, width: 170, fontSize: 11 }}>Dimension</th><th className="text-left font-medium px-4 py-2.5" style={{ color: greenD, borderBottom: `1px solid ${line}`, fontSize: 11 }}>Investment case</th><th className="text-left font-medium px-4 py-2.5" style={{ color: warn, borderBottom: `1px solid ${line}`, fontSize: 11 }}>Red Team case</th><th className="text-right font-medium px-4 py-2.5" style={{ color: mutedD, borderBottom: `1px solid ${line}`, fontSize: 11 }}>Delta</th></tr></thead>
                 <tbody>{[
-                  ["FY2028 revenue", "$53M (12% CAGR)", "$44M-$46M (5%-6% CAGR) if one program slips", "-$7M to -$9M"],
+                  ["FY2028 revenue", "$53M (12% CAGR)", "$44M to $46M (5% to 6% CAGR) if one program slips", "-$7M to -$9M"],
                   ["Adjusted EBITDA", "$5.1M, expanding with mix", "$4.4M if $740K adjustments recur", "-$0.7M"],
                   ["Customer A", "Long-standing, sole-source on qualified parts", "31% share, renewal within 24 months, pricing undisclosed", "Unresolved"],
                   ["Growth programs", "Two platform ramps with public OEM backlog", "67% of growth from two programs; schedule risk not modeled", "Unresolved"],
-                  ["Valuation view", "Upper half of $42M-$48M range", "Lower half of range, with earn-out on Customer A renewal", "-$3M to -$5M"],
-                  ["Exit thesis", "Strategic buyers value AS9100 capacity", "Concentration discount likely persists at exit", "0.5x-1.0x multiple"],
-                ].map(([k, a, b, d]) => <tr key={k} style={{ borderBottom: `1px solid ${line}` }}><td className="px-3 py-1.5 font-medium" style={{ color: mutedD }}>{k}</td><td className="px-3 py-1.5">{a}</td><td className="px-3 py-1.5">{b}</td><td className="px-3 py-1.5 text-right tabular-nums" style={{ color: d.startsWith("-") ? warn : mutedD }}>{d}</td></tr>)}</tbody>
+                  ["Valuation view", "Upper half of $42M to $48M range", "Lower half of range, with earn-out on Customer A renewal", "-$3M to -$5M"],
+                  ["Exit thesis", "Strategic buyers value AS9100 capacity", "Concentration discount likely persists at exit", "0.5x to 1.0x multiple"],
+                ].map(([k, a2, b2, d]) => <tr key={k} style={{ borderBottom: `1px solid ${line}` }}><td className="px-4 py-2.5 font-medium" style={{ color: mutedD }}>{k}</td><td className="px-4 py-2.5">{a2}</td><td className="px-4 py-2.5">{b2}</td><td className="px-4 py-2.5 text-right tabular-nums" style={{ color: d.startsWith("-") ? warn : mutedD }}>{d}</td></tr>)}</tbody>
               </table>
             </div>
           )}
@@ -1471,47 +1553,59 @@ function Diligence({ go }) {
     ["Management", 45, 24, 6, 1, "B. Kingsbury", Users], ["Technology", 70, 61, 4, 0, "H. Shimp", Cpu], ["Cybersecurity", 30, 18, 3, 0, "Advisor", Shield], ["ESG", 52, 27, 3, 0, "A. Anton", Leaf],
   ];
   const overall = Math.round(cats.reduce((s, c) => s + c[1], 0) / cats.length);
+  const health = (p, r) => (r > 0 ? "critical" : p < 50 ? "review" : "healthy");
+  const hl = { critical: "At risk", review: "Watch", healthy: "Healthy" };
   return (
     <div>
-      <PageHeader title="Due Diligence Command Center" sub="Project Falcon. Workstream status, open questions and material risks in one view." crumbs={["Deals", "Due Diligence", "Project Falcon"]} right={<Demo>Demo data</Demo>} />
-      <div className="grid grid-cols-6 gap-3 mb-4">
-        {[["Overall completion", `${overall}%`], ["Documents indexed", "1,247"], ["Financial tables extracted", "312"], ["Open questions", "47"], ["Unresolved risks", "8"], ["Material risks", "3"]].map(([k, v], i) => <Card key={k}><div className="text-xs" style={{ color: T.muted }}>{k}</div><div className="text-xl font-semibold tabular-nums mt-0.5" style={{ color: i === 5 ? T.red : T.text }}>{v}</div></Card>)}
+      <PageHeader title="Due Diligence" sub="Project Falcon. Workstream status, open questions and material risks." crumbs={["Deals", "Due Diligence", "Project Falcon"]} demo="Demo data" />
+      <div className="grid gap-4" style={{ gridTemplateColumns: "1.6fr 1fr 1fr 1fr", marginBottom: 24 }}>
+        <Card className="flex items-center gap-5">
+          <div className="relative shrink-0" style={{ width: 72, height: 72 }}>
+            <svg viewBox="0 0 36 36" width="72" height="72"><circle cx="18" cy="18" r="15.5" fill="none" stroke={T.soft} strokeWidth="3" /><circle cx="18" cy="18" r="15.5" fill="none" stroke={T.accent} strokeWidth="3" strokeDasharray={`${overall * 0.974} 100`} strokeLinecap="round" transform="rotate(-90 18 18)" /></svg>
+            <div className="absolute inset-0 flex items-center justify-center tabular-nums" style={{ fontSize: 17, fontWeight: 650, color: T.text }}>{overall}%</div>
+          </div>
+          <div><div style={{ color: T.muted, fontSize: 12 }}>Overall completion</div><div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>8 workstreams</div><div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>1,247 documents indexed · 312 tables extracted</div></div>
+        </Card>
+        <Metric k="Open questions" v="47" sub="11 in legal" />
+        <Metric k="Unresolved risks" v="8" />
+        <Metric k="Material risks" v="3" color={T.red} />
       </div>
       <div className="grid grid-cols-3 gap-4">
         <Card pad={false} className="col-span-2">
-          <table className="w-full text-sm">
-            <thead><tr className="text-xs" style={{ color: T.muted }}>{["Workstream", "Status", "Documents", "Open questions", "Material risks", "Owner"].map((h) => <th key={h} className="text-left font-medium px-4 py-2" style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
-            <tbody>{cats.map(([n, p, d, q, r, o, I]) => (
+          <table className="w-full" style={{ fontSize: 13 }}>
+            <thead><tr style={{ color: T.muted, fontSize: 11 }}>{["Workstream", "Health", "Completion", "Documents", "Open questions", "Material risks", "Owner"].map((h, i) => <th key={h} className={`font-medium px-4 py-2 ${i >= 3 && i <= 5 ? "text-right" : "text-left"}`} style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
+            <tbody>{cats.map(([n, pc, d, q, r, o, I]) => { const h = health(pc, r); return (
               <tr key={n} style={{ borderBottom: `1px solid ${T.border}` }} className="hover:bg-stone-50">
-                <td className="px-4 py-2.5 font-medium flex items-center gap-2" style={{ color: T.text }}><I size={14} style={{ color: T.muted }} /> {n}</td>
-                <td className="px-4 py-2.5"><div className="flex items-center gap-2"><div className="w-24 h-1.5 rounded" style={{ background: T.unknownSoft }}><div className="h-1.5 rounded" style={{ width: `${p}%`, background: p >= 70 ? T.green : p >= 50 ? T.accent : T.amber }} /></div><span className="text-xs tabular-nums" style={{ color: T.muted }}>{p}% complete</span></div></td>
-                <td className="px-4 py-2.5 tabular-nums">{d}</td>
-                <td className="px-4 py-2.5 tabular-nums" style={{ color: q > 8 ? T.amber : T.text }}>{q}</td>
-                <td className="px-4 py-2.5 tabular-nums font-medium" style={{ color: r > 0 ? T.red : T.text }}>{r}</td>
+                <td className="px-4 py-2.5 font-medium" style={{ color: T.text }}><span className="flex items-center gap-2"><I size={14} strokeWidth={1.6} style={{ color: T.muted }} /> {n}</span></td>
+                <td className="px-4 py-2.5"><Pri p={h} label={hl[h]} /></td>
+                <td className="px-4 py-2.5"><div className="flex items-center gap-2"><div className="w-24 rounded" style={{ height: 4, background: T.soft }}><div className="rounded" style={{ height: 4, width: `${pc}%`, background: h === "healthy" ? T.green : h === "review" ? T.amber : T.accent }} /></div><span className="tabular-nums" style={{ color: T.muted, fontSize: 12 }}>{pc}%</span></div></td>
+                <td className="px-4 py-2.5 tabular-nums text-right" style={{ color: T.muted }}>{d}</td>
+                <td className="px-4 py-2.5 tabular-nums text-right" style={{ color: T.text }}>{q}</td>
+                <td className="px-4 py-2.5 tabular-nums text-right font-semibold" style={{ color: r > 0 ? T.red : T.muted }}>{r || "0"}</td>
                 <td className="px-4 py-2.5" style={{ color: T.muted }}>{o}</td>
               </tr>
-            ))}</tbody>
+            ); })}</tbody>
           </table>
         </Card>
-        <div className="space-y-3">
+        <div className="space-y-4">
+          <Card>
+            <SectionTitle>Material risks</SectionTitle>
+            {[["Customer A concentration rose to 44% in latest month", "Commercial"], ["$740K EBITDA adjustments partially recurring", "Financial"], ["Change-of-control clause in Customer A agreement", "Legal"]].map(([t, w]) => <div key={t} className="flex items-start gap-2 py-2" style={{ borderBottom: `1px solid ${T.border}`, fontSize: 13 }}><span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: T.red }} /><div><div style={{ color: T.text }}>{t}</div><div style={{ color: T.muted, fontSize: 11 }}>{w}</div></div></div>)}
+            <div className="mt-3"><Btn small icon={ShieldAlert} onClick={() => go("redteam")}>Open Red Team</Btn></div>
+          </Card>
           <Card>
             <SectionTitle>Completion by workstream</SectionTitle>
-            <div style={{ height: 200 }}>
+            <div style={{ height: 180 }}>
               <ResponsiveContainer>
                 <BarChart data={cats.map((c) => ({ n: c[0].slice(0, 5), v: c[1] }))} margin={{ left: -20 }}>
                   <CartesianGrid stroke={T.border} vertical={false} />
-                  <XAxis dataKey="n" tick={{ fontSize: 10, fill: T.muted }} />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: T.muted }} />
+                  <XAxis dataKey="n" tick={{ fontSize: 10, fill: T.muted }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: T.muted }} axisLine={false} tickLine={false} />
                   <RTooltip formatter={(v) => `${v}%`} />
-                  <Bar dataKey="v" fill={T.accent} radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="v" fill={T.accent} radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </Card>
-          <Card>
-            <SectionTitle>Material risks</SectionTitle>
-            {[["Customer A concentration rose to 44% in latest month", "Commercial"], ["$740K EBITDA adjustments partially recurring", "Financial"], ["Change-of-control clause in Customer A agreement", "Legal"]].map(([t, w]) => <div key={t} className="flex items-start gap-2 text-sm py-1.5" style={{ borderBottom: `1px solid ${T.border}` }}><AlertTriangle size={14} className="mt-0.5 shrink-0" style={{ color: T.red }} /><div><div style={{ color: T.text }}>{t}</div><div className="text-xs" style={{ color: T.muted }}>{w}</div></div></div>)}
-            <Btn small icon={ShieldAlert} onClick={() => go("redteam")}>Open Red Team</Btn>
           </Card>
         </div>
       </div>
@@ -1538,36 +1632,43 @@ function ICMemo({ notify }) {
   const [open, setOpen] = useState(0);
   return (
     <div>
-      <PageHeader title="Investment Committee Memo" sub="Project Falcon" crumbs={["Deals", "IC Memo", "Project Falcon"]} right={<><span className="text-xs px-2 py-0.5 rounded-sm" style={{ background: T.amberSoft, color: T.amber, border: `1px solid ${T.amber}55` }}>Draft v3. Not for distribution. Investment professional review required.</span><Demo>Synthetic memo</Demo></>} />
+      <PageHeader title="Investment Committee Memo" sub="Project Falcon · Draft v3 · Not for distribution · Investment professional review required" crumbs={["Deals", "IC Memo", "Project Falcon"]} demo="Synthetic memo" />
       <div className="grid grid-cols-4 gap-4">
         <Card pad={false} className="col-span-3">
           {secs.map(([h, b, n], i) => (
             <div key={h} style={{ borderBottom: `1px solid ${T.border}` }}>
-              <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-stone-50">
-                <span className="text-sm font-medium" style={{ color: T.text }}>{h}</span>
-                <span className="flex items-center gap-3 text-xs" style={{ color: T.muted }}>{n > 0 && <span>{n} citations</span>}{h === "Open Questions" && <span style={{ color: T.amber }}>7 open</span>}<ChevronDown size={14} style={{ transform: open === i ? "rotate(180deg)" : "none" }} /></span>
+              <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-stone-50">
+                <span style={{ fontSize: 14, fontWeight: 600, color: T.text }}>{h}</span>
+                <span className="flex items-center gap-3" style={{ fontSize: 11, color: T.muted }}>{n > 0 && <span>{n} citations</span>}{h === "Open Questions" && <span style={{ color: T.amber }}>7 open</span>}<ChevronDown size={14} style={{ transform: open === i ? "rotate(180deg)" : "none" }} /></span>
               </button>
-              {open === i && <div className="px-4 pb-3 text-sm leading-relaxed" style={{ color: T.text }}>{b}{h === "Key Risks" && <span className="ml-2"><Level level="risk" small /></span>}</div>}
+              {open === i && <div className="px-5 pb-4" style={{ fontSize: 13.5, lineHeight: 1.65, color: T.text, maxWidth: 760 }}>{b}{h === "Key Risks" && <span className="ml-2"><Level level="risk" small /></span>}</div>}
             </div>
           ))}
         </Card>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <Card>
-            <KV k="Evidence coverage" v={<span style={{ color: T.green }}>94%</span>} />
-            <KV k="Unsupported claims" v={<span style={{ color: T.amber }}>2</span>} />
-            <KV k="Open questions" v="7" />
-            <KV k="Last analyst review" v="Today" />
+            <SectionTitle>Memo health</SectionTitle>
+            <div className="grid grid-cols-3 gap-2" style={{ marginBottom: 12 }}>
+              <div><div className="tabular-nums" style={{ fontSize: 20, fontWeight: 650, color: T.green }}>94%</div><div style={{ fontSize: 11, color: T.muted }}>Evidence coverage</div></div>
+              <div><div className="tabular-nums" style={{ fontSize: 20, fontWeight: 650, color: T.amber }}>2</div><div style={{ fontSize: 11, color: T.muted }}>Unsupported</div></div>
+              <div><div className="tabular-nums" style={{ fontSize: 20, fontWeight: 650, color: T.text }}>7</div><div style={{ fontSize: 11, color: T.muted }}>Open questions</div></div>
+            </div>
+            <div className="p-3.5" style={{ background: T.amberSoft, borderRadius: 10 }}>
+              <div style={{ fontSize: 11, color: T.amber }}>Ready for IC?</div>
+              <div className="flex items-center gap-2" style={{ fontSize: 14, fontWeight: 600, color: T.amber }}><span className="w-2 h-2 rounded-full" style={{ background: T.amber }} />Not yet</div>
+              <div style={{ fontSize: 12, color: T.text, marginTop: 2 }}>3 gating issues remain. Last analyst review today.</div>
+            </div>
           </Card>
           <Card>
             <div className="flex flex-col gap-2">
               <Btn icon={Eye} onClick={() => notify("Source panel: 32 citations across CIM, data room and market research.")}>Review sources</Btn>
               <Btn icon={GitCompare} onClick={() => notify("Version 3 vs version 2: Red-Team findings and deal structure sections changed.")}>Compare versions</Btn>
-              <Btn primary icon={Download} onClick={() => notify("Draft exported (simulated). Marked 'AI-assisted draft, not for distribution'.")}>Export draft</Btn>
+              <Btn primary icon={Download} onClick={() => notify("Draft exported (simulated). Marked 'Draft, not for distribution'.")}>Export draft</Btn>
             </div>
           </Card>
           <Card>
-            <div className="text-xs font-medium mb-1" style={{ color: T.amber }}>Unsupported claims</div>
-            <ul className="text-sm space-y-1" style={{ color: T.text }}><li>"Defense budgets stable" lacks a cited source.</li><li>Add-on target count not yet validated by Research Agent.</li></ul>
+            <div style={{ fontSize: 11, color: T.amber, fontWeight: 600, marginBottom: 4 }}>Unsupported claims</div>
+            <ul className="space-y-1" style={{ fontSize: 13, color: T.text }}><li>"Defense budgets stable" lacks a cited source.</li><li>Add-on target count not yet validated.</li></ul>
           </Card>
         </div>
       </div>
@@ -1577,61 +1678,69 @@ function ICMemo({ notify }) {
 
 /* ---------- Portfolio Intelligence ---------- */
 const PORTCOS = [
-  { name: "Portfolio Co. A (aerospace components)", rg: 9.4, eg: 14.2, pipe: "+18% QoQ", cap: "82%", conc: "27%", wc: "Improving", init: "Third shift, pricing review" },
-  { name: "Portfolio Co. B (medical molding)", rg: 12.1, eg: 16.8, pipe: "+7% QoQ", cap: "91%", conc: "22%", wc: "Stable", init: "Capacity expansion, add-on search" },
-  { name: "Portfolio Co. C (optical coatings)", rg: 4.2, eg: 2.1, pipe: "-3% QoQ", cap: "68%", conc: "34%", wc: "Watch", init: "Business development hire" },
-  { name: "Portfolio Co. D (industrial distribution)", rg: 6.8, eg: 9.9, pipe: "+11% QoQ", cap: "n/a", conc: "15%", wc: "Improving", init: "Pricing, e-commerce" },
+  { name: "Portfolio Co. A (aerospace components)", rg: 9.4, eg: 14.2, pipe: "+18% QoQ", cap: "82%", conc: "27%", wc: "Improving", init: "Third shift, pricing review", h: "healthy" },
+  { name: "Portfolio Co. B (medical molding)", rg: 12.1, eg: 16.8, pipe: "+7% QoQ", cap: "91%", conc: "22%", wc: "Stable", init: "Capacity expansion, add-on search", h: "review" },
+  { name: "Portfolio Co. C (optical coatings)", rg: 4.2, eg: 2.1, pipe: "-3% QoQ", cap: "68%", conc: "34%", wc: "Watch", init: "Business development hire", h: "review" },
+  { name: "Portfolio Co. D (industrial distribution)", rg: 6.8, eg: 9.9, pipe: "+11% QoQ", cap: "n/a", conc: "15%", wc: "Improving", init: "Pricing, e-commerce", h: "healthy" },
 ];
 function Portfolio() {
   const [tab, setTab] = useState("Portfolio");
   const trend = [{ q: "Q3 25", a: 100, b: 100, c: 100, d: 100 }, { q: "Q4 25", a: 103, b: 104, c: 101, d: 102 }, { q: "Q1 26", a: 105, b: 108, c: 101, d: 104 }, { q: "Q2 26", a: 109, b: 112, c: 103, d: 107 }];
   return (
     <div>
-      <PageHeader title="Portfolio Intelligence" sub="Operating signals across portfolio companies. Company names and metrics are fictionalized." crumbs={["Portfolio", "Portfolio Intelligence"]} right={<Demo>Fictionalized operating metrics</Demo>} />
+      <PageHeader title="Portfolio Intelligence" sub="Operating signals across portfolio companies. Names and metrics are fictionalized." crumbs={["Portfolio", "Portfolio Intelligence"]} demo="Fictionalized metrics" />
       <Tabs tabs={["Portfolio", "Value Creation", "Exit Intelligence"]} value={tab} onChange={setTab} />
-      <div className="mt-4">
+      <div style={{ marginTop: 24 }}>
         {tab === "Portfolio" && (
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-2 space-y-3">
-              <Card pad={false}>
-                <table className="w-full text-sm">
-                  <thead><tr className="text-xs" style={{ color: T.muted }}>{["Company", "Revenue growth", "EBITDA growth", "Sales pipeline", "Capacity", "Customer conc.", "Working capital", "Key initiatives"].map((h) => <th key={h} className="text-left font-medium px-3 py-2" style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
-                  <tbody>{PORTCOS.map((p) => (
-                    <tr key={p.name} style={{ borderBottom: `1px solid ${T.border}` }} className="hover:bg-stone-50">
-                      <td className="px-3 py-2 font-medium" style={{ color: T.text }}>{p.name}</td>
-                      <td className="px-3 py-2 tabular-nums" style={{ color: T.green }}>+{pct(p.rg)}</td>
-                      <td className="px-3 py-2 tabular-nums" style={{ color: p.eg > 5 ? T.green : T.amber }}>+{pct(p.eg)}</td>
-                      <td className="px-3 py-2 tabular-nums" style={{ color: p.pipe.startsWith("-") ? T.red : T.green }}>{p.pipe}</td>
-                      <td className="px-3 py-2 tabular-nums" style={{ color: p.cap === "91%" ? T.amber : T.text }}>{p.cap}</td>
-                      <td className="px-3 py-2 tabular-nums" style={{ color: parseInt(p.conc) > 30 ? T.amber : T.text }}>{p.conc}</td>
-                      <td className="px-3 py-2" style={{ color: p.wc === "Watch" ? T.amber : T.text }}>{p.wc}</td>
-                      <td className="px-3 py-2 text-xs" style={{ color: T.muted }}>{p.init}</td>
-                    </tr>
-                  ))}</tbody>
-                </table>
-              </Card>
+          <>
+            <div className="grid grid-cols-4 gap-4" style={{ marginBottom: 24 }}>
+              <Metric k="Companies" v="4" />
+              <Metric k="Expansion opportunities" v="2" color={T.green} />
+              <Metric k="Capacity constraints" v="1" color={T.amber} />
+              <Metric k="Commercial watch" v="1" color={T.amber} />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2 space-y-4">
+                <Card pad={false}>
+                  <table className="w-full" style={{ fontSize: 13 }}>
+                    <thead><tr style={{ color: T.muted, fontSize: 11 }}>{["Company", "Health", "Revenue growth", "EBITDA growth", "Pipeline", "Capacity", "Customer conc.", "Key initiatives"].map((h, i) => <th key={h} className={`font-medium px-4 py-2 ${i >= 2 && i <= 6 ? "text-right" : "text-left"}`} style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
+                    <tbody>{PORTCOS.map((p) => (
+                      <tr key={p.name} style={{ borderBottom: `1px solid ${T.border}` }} className="hover:bg-stone-50">
+                        <td className="px-4 py-2.5 font-medium" style={{ color: T.text }}>{p.name}</td>
+                        <td className="px-4 py-2.5"><Pri p={p.h} label={p.h === "healthy" ? "Healthy" : "Watch"} /></td>
+                        <td className="px-4 py-2.5 tabular-nums text-right">+{pct(p.rg)}</td>
+                        <td className="px-4 py-2.5 tabular-nums text-right" style={{ color: p.eg < 5 ? T.amber : T.text }}>+{pct(p.eg)}</td>
+                        <td className="px-4 py-2.5 tabular-nums text-right" style={{ color: p.pipe.startsWith("-") ? T.red : T.text }}>{p.pipe}</td>
+                        <td className="px-4 py-2.5 tabular-nums text-right" style={{ color: p.cap === "91%" ? T.amber : T.text }}>{p.cap}</td>
+                        <td className="px-4 py-2.5 tabular-nums text-right" style={{ color: parseInt(p.conc) > 30 ? T.amber : T.text }}>{p.conc}</td>
+                        <td className="px-4 py-2.5" style={{ color: T.muted, fontSize: 12 }}>{p.init}</td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                </Card>
+                <Card>
+                  <SectionTitle>Indexed revenue trend (Q3 2025 = 100)</SectionTitle>
+                  <div style={{ height: 200 }}>
+                    <ResponsiveContainer>
+                      <LineChart data={trend} margin={{ left: -20 }}>
+                        <CartesianGrid stroke={T.border} vertical={false} />
+                        <XAxis dataKey="q" tick={{ fontSize: 11, fill: T.muted }} axisLine={false} tickLine={false} />
+                        <YAxis domain={[95, 115]} tick={{ fontSize: 11, fill: T.muted }} axisLine={false} tickLine={false} />
+                        <RTooltip />
+                        {[["a", T.accent], ["b", T.green], ["c", T.amber], ["d", "#7A8AA8"]].map(([k, c]) => <Line key={k} type="monotone" dataKey={k} stroke={c} dot={false} strokeWidth={2} name={`Co. ${k.toUpperCase()}`} />)}
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </Card>
+              </div>
               <Card>
-                <SectionTitle>Indexed revenue trend (Q3 2025 = 100)</SectionTitle>
-                <div style={{ height: 200 }}>
-                  <ResponsiveContainer>
-                    <LineChart data={trend} margin={{ left: -20 }}>
-                      <CartesianGrid stroke={T.border} vertical={false} />
-                      <XAxis dataKey="q" tick={{ fontSize: 11, fill: T.muted }} />
-                      <YAxis domain={[95, 115]} tick={{ fontSize: 11, fill: T.muted }} />
-                      <RTooltip />
-                      {[["a", T.accent], ["b", T.green], ["c", T.amber], ["d", "#7a8aa8"]].map(([k, c]) => <Line key={k} type="monotone" dataKey={k} stroke={c} dot={false} strokeWidth={2} name={`Co. ${k.toUpperCase()}`} />)}
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+                <SectionTitle>Intelligence alerts</SectionTitle>
+                {[["Sales pipeline increased 18% quarter-over-quarter.", "Co. A", "healthy"], ["Two customers show declining order frequency.", "Co. C", "review"], ["Machine utilization indicates potential capacity constraint.", "Co. B", "review"], ["Pricing opportunity identified in low-margin customer segment.", "Co. D", "active"]].map(([t, c, pr]) => (
+                  <div key={t} className="py-2.5 flex gap-2" style={{ borderBottom: `1px solid ${T.border}` }}><span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: PRI[pr][0] }} /><div><div style={{ fontSize: 13, color: T.text }}>{t}</div><div style={{ fontSize: 11, color: T.muted }}>{c} · from operational reporting (conceptual)</div></div></div>
+                ))}
               </Card>
             </div>
-            <Card>
-              <SectionTitle>AI-generated portfolio alerts</SectionTitle>
-              {[["Sales pipeline increased 18% quarter-over-quarter.", "Co. A", T.green], ["Two customers show declining order frequency.", "Co. C", T.amber], ["Machine utilization indicates potential capacity constraint.", "Co. B", T.amber], ["Pricing opportunity identified in low-margin customer segment.", "Co. D", T.accent]].map(([t, c, col]) => (
-                <div key={t} className="py-2 flex gap-2" style={{ borderBottom: `1px solid ${T.border}` }}><span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: col }} /><div><div className="text-sm" style={{ color: T.text }}>{t}</div><div className="text-xs" style={{ color: T.muted }}>{c}. Based on operational reporting (conceptual integration).</div></div></div>
-              ))}
-            </Card>
-          </div>
+          </>
         )}
         {tab === "Value Creation" && <ValueCreation embedded />}
         {tab === "Exit Intelligence" && <ExitIntel />}
@@ -1640,16 +1749,34 @@ function Portfolio() {
   );
 }
 function ValueCreation({ embedded }) {
-  const themes = [["Business Development", "Systematic outbound to OEM engineering teams; CRM discipline; case-study marketing.", 4, TrendingUp], ["Pricing", "Part-level margin analysis; reprice bottom-quartile parts at renewal.", 3, DollarSign], ["Operational Efficiency", "Third shift, OEE tracking, scrap reduction.", 3, Wrench], ["Procurement", "Resin and metal consolidation across portfolio.", 2, Layers], ["Working Capital", "Inventory turns and receivable terms.", 2, Scale], ["Digital", "Quoting automation, customer portal.", 2, Monitor], ["AI / Automation", "Quoting, quality documentation, demand sensing.", 3, Bot], ["Add-on M&A", "Regional capability and customer acquisitions.", 4, Building]];
+  const cols = [
+    ["Commercial", [["Business Development", TrendingUp, [2, 1, 1]], ["Pricing", DollarSign, [2, 1, 0]], ["Digital", Monitor, [1, 1, 0]]]],
+    ["Operations", [["Operational Efficiency", Wrench, [2, 1, 0]], ["Procurement", Layers, [2, 0, 0]], ["Working Capital", Scale, [1, 1, 0]]]],
+    ["Strategic", [["Add-on M&A", Building, [3, 1, 0]], ["AI / Automation", Bot, [2, 0, 1]]]],
+  ];
   const body = (
-    <div className="grid grid-cols-4 gap-3">
-      {themes.map(([h, b, n, I]) => (
-        <Card key={h}><div className="flex items-center justify-between mb-1"><span className="flex items-center gap-2 text-sm font-medium" style={{ color: T.text }}><I size={14} style={{ color: T.accent }} /> {h}</span><span className="text-xs tabular-nums" style={{ color: T.muted }}>{n} active</span></div><p className="text-xs" style={{ color: T.muted }}>{b}</p></Card>
+    <div className="grid grid-cols-3 gap-4">
+      {cols.map(([g, items]) => (
+        <div key={g}>
+          <div style={{ fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase", color: T.muted, marginBottom: 8 }}>{g}</div>
+          <div className="space-y-3">
+            {items.map(([h, I, [ok, watch, blocked]]) => (
+              <Card key={h}>
+                <div className="flex items-center justify-between" style={{ marginBottom: 6 }}><span className="flex items-center gap-2" style={{ fontSize: 14, fontWeight: 600, color: T.text }}><I size={15} strokeWidth={1.6} style={{ color: T.muted }} /> {h}</span><span className="tabular-nums" style={{ fontSize: 16, fontWeight: 650, color: T.text }}>{ok + watch + blocked} <span style={{ fontSize: 11, color: T.muted, fontWeight: 400 }}>active</span></span></div>
+                <div className="flex gap-2 flex-wrap">
+                  {ok > 0 && <Pri p="healthy" label={`${ok} on track`} />}
+                  {watch > 0 && <Pri p="review" label={`${watch} watch`} />}
+                  {blocked > 0 && <Pri p="critical" label={`${blocked} blocked`} />}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   );
   if (embedded) return body;
-  return <div><PageHeader title="Value Creation" sub="Themes applied across the portfolio. Counts are the number of active initiatives per theme." crumbs={["Portfolio", "Value Creation"]} right={<Demo>Demo data</Demo>} />{body}</div>;
+  return <div><PageHeader title="Value Creation" sub="Operating board of active initiatives across the portfolio." crumbs={["Portfolio", "Value Creation"]} demo="Demo data" />{body}</div>;
 }
 function ExitIntel() {
   const readiness = [["Management dependency", 58, T.amber], ["Customer concentration", 52, T.red], ["Revenue scale", 80, T.green], ["EBITDA margin", 84, T.green], ["Commercial infrastructure", 74, T.accent], ["Systems and reporting", 88, T.green]];
@@ -1657,22 +1784,22 @@ function ExitIntel() {
     <div className="grid grid-cols-3 gap-4">
       <Card className="col-span-2">
         <SectionTitle right={<Demo>Fictional portfolio company</Demo>}>Exit intelligence: Portfolio Co. A</SectionTitle>
-        <div className="grid grid-cols-3 gap-4 text-sm">
-          <div><div className="text-xs font-medium mb-1" style={{ color: T.muted }}>Potential strategic buyers</div><ul className="space-y-1" style={{ color: T.text }}><li>Tier 1 aerostructures supplier</li><li>Diversified precision components group</li><li>Defense electronics OEM (vertical integration)</li></ul></div>
-          <div><div className="text-xs font-medium mb-1" style={{ color: T.muted }}>Potential financial sponsors</div><ul className="space-y-1" style={{ color: T.text }}><li>Lower-mid-market aerospace platforms seeking add-ons</li><li>Industrial technology funds, $50M-$150M EV</li></ul></div>
-          <div><div className="text-xs font-medium mb-1" style={{ color: T.muted }}>Comparable transactions</div><ul className="space-y-1" style={{ color: T.text }}><li>Precision machining add-on, 2025: 7.5x-8.5x EBITDA (illustrative)</li><li>Aerospace components platform, 2024: 9x-10x (illustrative)</li></ul></div>
+        <div className="grid grid-cols-3 gap-6" style={{ fontSize: 13 }}>
+          <div><div style={{ fontSize: 11, color: T.muted, marginBottom: 4 }}>Potential strategic buyers</div><ul className="space-y-1" style={{ color: T.text }}><li>Tier 1 aerostructures supplier</li><li>Diversified precision components group</li><li>Defense electronics OEM</li></ul></div>
+          <div><div style={{ fontSize: 11, color: T.muted, marginBottom: 4 }}>Potential financial sponsors</div><ul className="space-y-1" style={{ color: T.text }}><li>Aerospace platforms seeking add-ons</li><li>Industrial technology funds, $50M to $150M EV</li></ul></div>
+          <div><div style={{ fontSize: 11, color: T.muted, marginBottom: 4 }}>Comparable transactions</div><ul className="space-y-1" style={{ color: T.text }}><li>Precision machining add-on, 2025: 7.5x to 8.5x (illustrative)</li><li>Aerospace components platform, 2024: 9x to 10x (illustrative)</li></ul></div>
         </div>
-        <div className="grid grid-cols-3 gap-3 mt-4">
-          <KV k="Valuation range" v="8.0x-9.5x EBITDA" level="estimated" />
+        <div className="grid grid-cols-3 gap-4" style={{ marginTop: 20 }}>
+          <KV k="Valuation range" v="8.0x to 9.5x EBITDA" level="estimated" />
           <KV k="Business quality score" v="78 / 100" level="inferred" />
           <KV k="Estimated exit readiness" v={<span style={{ color: T.accent }}>74 / 100</span>} />
         </div>
       </Card>
       <Card>
         <SectionTitle>Value creation remaining</SectionTitle>
-        {readiness.map(([k, v, c]) => <div key={k} className="flex items-center gap-2 text-xs py-1"><span className="w-40" style={{ color: T.muted }}>{k}</span><div className="flex-1 h-1.5 rounded" style={{ background: T.unknownSoft }}><div className="h-1.5 rounded" style={{ width: `${v}%`, background: c }} /></div><span className="w-6 text-right tabular-nums font-medium" style={{ color: T.text }}>{v}</span></div>)}
-        <div className="mt-3 text-xs" style={{ color: T.muted }}>Primary blockers</div>
-        <div className="flex gap-1.5 mt-1">{["Customer concentration", "Management depth"].map((b) => <span key={b} className="text-xs px-2 py-0.5 rounded" style={{ background: T.redSoft, color: T.red }}>{b}</span>)}</div>
+        {readiness.map(([k, v, c]) => <div key={k} className="flex items-center gap-2 py-1" style={{ fontSize: 12 }}><span className="w-40" style={{ color: T.muted }}>{k}</span><div className="flex-1 rounded" style={{ height: 4, background: T.soft }}><div className="rounded" style={{ height: 4, width: `${v}%`, background: c }} /></div><span className="w-6 text-right tabular-nums font-medium" style={{ color: T.text }}>{v}</span></div>)}
+        <div style={{ fontSize: 11, color: T.muted, marginTop: 12 }}>Primary blockers</div>
+        <div className="flex gap-1.5 mt-1">{["Customer concentration", "Management depth"].map((b) => <Pri key={b} p="critical" label={b} />)}</div>
       </Card>
     </div>
   );
@@ -1684,36 +1811,44 @@ function Knowledge() {
   const [res, setRes] = useState(true);
   const cats = ["Historical Deals", "Investment Theses", "Rejected Opportunities", "Diligence Findings", "Portfolio Lessons", "Market Research", "Investment Committee Decisions"];
   const insights = [
-    ["Historical pattern", "Companies with highly technical capabilities but limited systematic business development may present attractive value-creation opportunities.", "Illustrative insight"],
-    ["Diligence lesson", "Program-level revenue visibility mattered more than total customer count in past molding investments. Ask for revenue by program, not only by customer.", "Illustrative insight"],
-    ["Rejected opportunity pattern", "Molders whose largest customer exceeded 40% without a multi-year agreement were declined in most illustrative cases, regardless of margin.", "Illustrative insight"],
-    ["Portfolio lesson", "Capacity investment ahead of validated demand extended payback periods; capacity added against qualified programs paid back faster.", "Illustrative insight"],
+    ["Historical pattern", "Companies with highly technical capabilities but limited systematic business development may present attractive value-creation opportunities.", ["Historical deals", "Portfolio lessons"]],
+    ["Diligence lesson", "Program-level revenue visibility mattered more than total customer count in past molding investments. Ask for revenue by program, not only by customer.", ["Diligence findings"]],
+    ["Rejected opportunity pattern", "Molders whose largest customer exceeded 40% without a multi-year agreement were declined in most illustrative cases, regardless of margin.", ["Rejected opportunities", "IC decisions"]],
+    ["Portfolio lesson", "Capacity investment ahead of validated demand extended payback periods; capacity added against qualified programs paid back faster.", ["Portfolio lessons"]],
   ];
   return (
     <div>
-      <PageHeader title="MCM Knowledge" sub="Institutional memory as searchable intelligence. Decades of decisions, findings and lessons, conceptually indexed." crumbs={["Knowledge", "MCM Knowledge"]} right={<Demo>All insights are synthetic and illustrative</Demo>} />
-      <Card className="mb-4">
-        <div className="flex gap-2"><span className="flex items-center gap-2 px-3 rounded flex-1" style={{ border: `1px solid ${T.border}` }}><Search size={14} style={{ color: T.muted }} /><input value={q} onChange={(e) => setQ(e.target.value)} className="flex-1 text-sm py-2 outline-none" style={{ color: T.text }} /></span><Btn primary onClick={() => setRes(true)}>Search knowledge</Btn></div>
-        <div className="flex gap-1.5 mt-3 flex-wrap">{cats.map((c) => <span key={c} className="text-xs px-2 py-0.5 rounded" style={{ border: `1px solid ${T.border}`, color: T.muted }}>{c}</span>)}</div>
-      </Card>
+      <PageHeader title="MCM Knowledge" sub="Institutional memory as searchable intelligence. Decades of decisions, findings and lessons, conceptually indexed." crumbs={["Knowledge", "MCM Knowledge"]} demo="All insights synthetic" />
+      <div className="flex gap-2" style={{ marginBottom: 12 }}><span className="flex items-center gap-2 px-4 flex-1 bg-white" style={{ border: `1px solid ${T.border}`, borderRadius: R.chip }}><Search size={14} style={{ color: T.muted }} /><input value={q} onChange={(e) => setQ(e.target.value)} className="flex-1 outline-none" style={{ fontSize: 13, padding: "8px 0", color: T.text }} /></span><Btn primary onClick={() => setRes(true)}>Search knowledge</Btn></div>
+      <div className="flex gap-1.5 flex-wrap" style={{ marginBottom: 24 }}>{cats.map((c) => <span key={c} style={{ fontSize: 12, padding: "3px 10px", borderRadius: 999, background: T.soft, color: T.muted }}>{c}</span>)}</div>
       {res && (
-        <div className="grid grid-cols-2 gap-3">
-          {insights.map(([h, b, l]) => (
-            <Card key={h}><div className="flex items-center justify-between mb-1"><span className="text-xs font-medium" style={{ color: T.accent }}>{h}</span><span className="text-xs px-1.5 py-0.5 rounded" style={{ background: T.unknownSoft, color: T.unknown }}>{l}</span></div><p className="text-sm" style={{ color: T.text }}>{b}</p><div className="text-xs mt-2" style={{ color: T.muted }}>Derived from synthetic deal records. No actual MCM decisions are represented.</div></Card>
+        <Card pad={false}>
+          <div className="px-5 py-2" style={{ fontSize: 12, color: T.muted, borderBottom: `1px solid ${T.border}` }}>4 results · no actual MCM decisions are represented</div>
+          {insights.map(([h, b, src]) => (
+            <div key={h} className="px-5 py-4" style={{ borderBottom: `1px solid ${T.border}` }}>
+              <div className="flex items-center gap-2" style={{ marginBottom: 4 }}><span style={{ fontSize: 14, fontWeight: 600, color: T.accent }}>{h}</span><span style={{ fontSize: 11, padding: "1px 6px", borderRadius: 4, background: T.unknownSoft, color: T.unknown }}>Illustrative</span></div>
+              <p style={{ fontSize: 13.5, color: T.text, margin: 0, lineHeight: 1.6, maxWidth: 760 }}>{b}</p>
+              <div style={{ fontSize: 11, color: T.muted, marginTop: 6 }}>Sources: {src.join(" · ")}</div>
+            </div>
           ))}
-        </div>
+        </Card>
       )}
     </div>
   );
 }
 function ResearchLibrary() {
-  const docs = [["Medical device outsourcing outlook 2026", "Market research", "Market Agent", "Today"], ["Aerospace build-rate tracker Q3", "Market research", "Market Agent", "Yesterday"], ["Precision molder peer margin set (8 companies)", "Benchmark", "Financial Agent", "2 days ago"], ["Reshoring signals in component supply", "Market research", "Research Agent", "1 week ago"], ["Elevator and escalator parts distribution map", "Sector map", "Research Agent", "2 weeks ago"], ["Market Research #14: Program dependency in aerospace suppliers", "Research note", "Red-Team Agent", "3 weeks ago"]];
+  const docs = [["Medical device outsourcing outlook 2026", "Market research", "Market Agent", "Today", "Medical Device thesis", Globe], ["Aerospace build-rate tracker Q3", "Market research", "Market Agent", "Yesterday", "Aerospace thesis", Globe], ["Precision molder peer margin set (8 companies)", "Benchmark", "Financial Agent", "2 days ago", "Medical Device thesis", BarChart3], ["Reshoring signals in component supply", "Market research", "Research Agent", "1 week ago", "Medical Device thesis", Globe], ["Elevator and escalator parts distribution map", "Sector map", "Research Agent", "2 weeks ago", "Distribution thesis", Layers], ["Market Research #14: Program dependency in aerospace suppliers", "Research note", "Red-Team Agent", "3 weeks ago", "Project Falcon", FileText]];
+  const Sel = ({ label }) => <select className="bg-white" style={{ fontSize: 13, padding: "7px 12px", borderRadius: R.chip, border: `1px solid ${T.border}`, color: T.muted }}><option>{label}</option></select>;
   return (
     <div>
-      <PageHeader title="Research Library" sub="Agent-produced research notes, benchmarks and sector maps, each tied to the thesis or deal that requested it." crumbs={["Knowledge", "Research Library"]} right={<Demo>Synthetic documents</Demo>} />
+      <PageHeader title="Research Library" sub="Research notes, benchmarks and sector maps, each tied to the thesis or deal that requested it." crumbs={["Knowledge", "Research Library"]} demo="Synthetic documents" />
+      <div className="flex items-center gap-2" style={{ marginBottom: 16 }}>
+        <span className="flex items-center gap-2 px-4 bg-white" style={{ border: `1px solid ${T.border}`, borderRadius: R.chip, width: 300 }}><Search size={13} style={{ color: T.muted }} /><input placeholder="Search research" className="flex-1 outline-none" style={{ fontSize: 13, padding: "6px 0" }} /></span>
+        <Sel label="Type" /><Sel label="Produced by" /><Sel label="Date" /><Sel label="Related thesis" />
+      </div>
       <Card pad={false}>
-        <table className="w-full text-sm"><thead><tr className="text-xs" style={{ color: T.muted }}>{["Title", "Type", "Produced by", "Updated", ""].map((h) => <th key={h} className="text-left font-medium px-4 py-2" style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
-          <tbody>{docs.map(([t, ty, a, u]) => <tr key={t} className="hover:bg-stone-50 cursor-pointer" style={{ borderBottom: `1px solid ${T.border}` }}><td className="px-4 py-2 font-medium" style={{ color: T.text }}>{t}</td><td className="px-4 py-2" style={{ color: T.muted }}>{ty}</td><td className="px-4 py-2" style={{ color: T.muted }}>{a}</td><td className="px-4 py-2" style={{ color: T.muted }}>{u}</td><td className="px-4 py-2 text-xs" style={{ color: T.accent }}>Open</td></tr>)}</tbody></table>
+        <table className="w-full" style={{ fontSize: 13 }}><thead><tr style={{ color: T.muted, fontSize: 11 }}>{["Title", "Type", "Produced by", "Related to", "Updated"].map((h) => <th key={h} className="text-left font-medium px-4 py-2" style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
+          <tbody>{docs.map(([t, ty, a, u, rel, I]) => <tr key={t} className="hover:bg-stone-50 cursor-pointer" style={{ borderBottom: `1px solid ${T.border}` }}><td className="px-4 py-2.5 font-medium" style={{ color: T.text }}><span className="flex items-center gap-2"><I size={14} strokeWidth={1.6} style={{ color: T.muted }} />{t}</span></td><td className="px-4 py-2.5" style={{ color: T.muted }}>{ty}</td><td className="px-4 py-2.5" style={{ color: T.muted }}>{a}</td><td className="px-4 py-2.5"><span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 4, background: T.accentSoft, color: T.accent }}>{rel}</span></td><td className="px-4 py-2.5" style={{ color: T.muted }}>{u}</td></tr>)}</tbody></table>
       </Card>
     </div>
   );
@@ -1722,42 +1857,50 @@ function ResearchLibrary() {
 /* ---------- Agent Architecture ---------- */
 function AgentActivity() {
   const agents = ["Research", "Qualification", "Market", "Financial", "CIM", "Diligence", "Red-Team", "Relationship", "Reporting"];
-  const tools = [["CRM", Database], ["ZoomInfo", Users], ["Outlook", Mail], ["Company websites", Globe], ["Research sources", Library], ["Data room", FolderLock], ["Portfolio reporting", BarChart3]];
-  const routing = [["Industry classification", "Small model", "Low complexity", "$"], ["Document extraction", "Small / local model", "Structured extraction", "$"], ["Company research synthesis", "Advanced model", "Multi-source reasoning", "$$"], ["CIM synthesis", "Advanced model", "Complex reasoning", "$$"], ["Red-team analysis", "Advanced model", "Adversarial reasoning", "$$"], ["Confidential data-room review", "Local / open-source model", "Sensitive processing", "$"], ["Outreach personalization", "Advanced model", "Tone and judgment", "$$"], ["Portfolio KPI monitoring", "Small model", "Rule-based checks", "$"]];
-  const Box = ({ children, dark, dashed }) => <div className="rounded px-3 py-2 text-xs text-center font-medium" style={dark ? { background: T.nav, color: "#fff" } : { border: `1px ${dashed ? "dashed" : "solid"} ${T.border}`, background: "#fff", color: T.text }}>{children}</div>;
-  const Arrow = () => <div className="flex justify-center py-1"><ChevronDown size={16} style={{ color: T.muted }} /></div>;
+  const tools = [["CRM", Database], ["ZoomInfo", Users], ["Outlook", Mail], ["Websites", Globe], ["Research", Library], ["Data room", FolderLock], ["Reporting", BarChart3]];
+  const routing = [["Industry classification", "Small", "Low complexity", "Low", "Fast"], ["Document extraction", "Small / local", "Structured extraction", "Low", "Fast"], ["Company research synthesis", "Advanced", "Multi-source reasoning", "Medium", "Medium"], ["CIM synthesis", "Advanced", "Complex reasoning", "High", "Slow"], ["Red-team analysis", "Advanced", "Adversarial reasoning", "High", "Slow"], ["Confidential data-room review", "Local", "Sensitive processing", "Low", "Medium"], ["Outreach personalization", "Advanced", "Tone and judgment", "Medium", "Medium"], ["Portfolio KPI monitoring", "Small", "Rule-based checks", "Low", "Fast"]];
+  const Node = ({ label, sub, dark }) => (
+    <div className="flex flex-col items-center" style={{ width: 96 }}>
+      <span className="rounded-full" style={{ width: 10, height: 10, background: dark ? T.nav : T.accent, border: `2px solid ${dark ? T.nav : "#fff"}`, boxShadow: `0 0 0 1px ${T.accent}` }} />
+      <span className="text-center" style={{ fontSize: 12, fontWeight: 500, color: T.text, marginTop: 6, lineHeight: 1.25 }}>{label}</span>
+      {sub && <span className="text-center" style={{ fontSize: 11, color: T.muted }}>{sub}</span>}
+    </div>
+  );
+  const VLine = ({ h = 22 }) => <div style={{ width: 1, height: h, background: T.border, margin: "0 auto" }} />;
+  const cost = (c) => ({ Low: T.green, Medium: T.amber, High: T.red }[c]);
   return (
     <div>
-      <PageHeader title="Agent Activity and Architecture" sub="How work is orchestrated, which model handles each task, and where cost is controlled." crumbs={["System", "Agent Activity"]} right={<Demo>Conceptual architecture</Demo>} />
-      <div className="grid grid-cols-5 gap-4">
-        <Card className="col-span-3">
-          <div className="max-w-2xl mx-auto">
-            <Box dark>Orchestrator</Box>
-            <Arrow />
-            <div className="grid grid-cols-3 gap-2">{agents.map((a) => <Box key={a}>{a} Agent</Box>)}</div>
-            <Arrow />
-            <Box dark>Model Router</Box>
-            <div className="grid grid-cols-3 gap-2 mt-2">
-              <Box>Complex reasoning<div className="font-normal" style={{ color: T.muted }}>Frontier LLM</div></Box>
-              <Box>Extraction / classification<div className="font-normal" style={{ color: T.muted }}>Smaller model</div></Box>
-              <Box>Sensitive / local processing<div className="font-normal" style={{ color: T.muted }}>Local open-source model</div></Box>
+      <PageHeader title="Agent Architecture" sub="How work is orchestrated, which model handles each task, and where cost is controlled." crumbs={["System", "Agent Activity"]} demo="Conceptual architecture" />
+      <div className="grid gap-4" style={{ gridTemplateColumns: "3fr 2fr" }}>
+        <Card>
+          <div className="flex flex-col items-center py-2">
+            <Node label="Orchestrator" dark />
+            <VLine />
+            <div style={{ width: "88%", height: 1, background: T.border }} />
+            <div className="grid grid-cols-3 gap-y-5 w-full justify-items-center" style={{ paddingTop: 10 }}>{agents.map((a) => <Node key={a} label={`${a} Agent`} />)}</div>
+            <VLine h={26} />
+            <Node label="Model Router" dark />
+            <VLine />
+            <div style={{ width: "62%", height: 1, background: T.border }} />
+            <div className="grid grid-cols-3 gap-2 justify-items-center" style={{ width: "70%", paddingTop: 10 }}>
+              <Node label="Fast" sub="Small model" /><Node label="Advanced" sub="Frontier model" /><Node label="Secure" sub="Local, open source" />
             </div>
-            <Arrow />
-            <div className="text-xs text-center mb-1" style={{ color: T.unknown }}>Tools (conceptual integrations, not connected)</div>
-            <div className="grid grid-cols-7 gap-1.5">{tools.map(([t, I]) => <Box key={t} dashed><I size={13} className="mx-auto mb-0.5" style={{ color: T.muted }} />{t}</Box>)}</div>
+            <VLine h={26} />
+            <div style={{ fontSize: 11, color: T.unknown, marginBottom: 8 }}>Conceptual integrations, not connected</div>
+            <div className="flex gap-2 flex-wrap justify-center">{tools.map(([t, I]) => <span key={t} className="flex items-center gap-1.5" style={{ fontSize: 12, padding: "4px 10px", borderRadius: 999, background: T.soft, color: T.muted }}><I size={13} strokeWidth={1.6} />{t}</span>)}</div>
           </div>
-          <div className="mt-4 rounded p-3 text-xs" style={{ background: T.accentSoft, color: T.accent }}>Every agent output carries evidence tags and a confidence score. Human approval gates outreach, IC recommendations and any external action.</div>
+          <div className="p-3" style={{ marginTop: 16, background: T.accentSoft, color: T.accent, borderRadius: 6, fontSize: 12 }}>Every output carries evidence tags and a confidence score. Human approval gates outreach, IC recommendations and any external action.</div>
         </Card>
-        <div className="col-span-2 space-y-3">
+        <div className="space-y-4">
           <Card pad={false}>
-            <div className="px-4 pt-3"><SectionTitle>Model selection logic</SectionTitle></div>
-            <table className="w-full text-sm"><thead><tr className="text-xs" style={{ color: T.muted }}>{["Task", "Model type", "Reason", "Rel. cost"].map((h) => <th key={h} className="text-left font-medium px-4 py-1.5" style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
-              <tbody>{routing.map(([t, m, r, c]) => <tr key={t} style={{ borderBottom: `1px solid ${T.border}` }}><td className="px-4 py-1.5" style={{ color: T.text }}>{t}</td><td className="px-4 py-1.5 text-xs" style={{ color: m.startsWith("Advanced") ? T.accent : m.startsWith("Local") ? T.amber : T.green }}>{m}</td><td className="px-4 py-1.5 text-xs" style={{ color: T.muted }}>{r}</td><td className="px-4 py-1.5 tabular-nums font-medium">{c}</td></tr>)}</tbody></table>
+            <div className="px-4 pt-4"><SectionTitle>Model selection</SectionTitle></div>
+            <table className="w-full" style={{ fontSize: 12.5 }}><thead><tr style={{ color: T.muted, fontSize: 11 }}>{["Task", "Model", "Reason", "Cost", "Latency"].map((h) => <th key={h} className="text-left font-medium px-4 py-1.5" style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
+              <tbody>{routing.map(([t, m, r, c, l]) => <tr key={t} style={{ borderBottom: `1px solid ${T.border}` }}><td className="px-4 py-2" style={{ color: T.text }}>{t}</td><td className="px-4 py-2" style={{ color: T.muted }}>{m}</td><td className="px-4 py-2" style={{ color: T.muted, fontSize: 11.5 }}>{r}</td><td className="px-4 py-2 font-medium" style={{ color: cost(c) }}>{c}</td><td className="px-4 py-2" style={{ color: T.muted }}>{l}</td></tr>)}</tbody></table>
           </Card>
           <Card>
-            <SectionTitle>Cost profile (demo, last 30 days)</SectionTitle>
-            {[["Small / local models", "71% of tasks", "18% of spend", T.green], ["Advanced models", "29% of tasks", "82% of spend", T.accent]].map(([k, a, b, c]) => <div key={k} className="flex items-center justify-between text-sm py-1.5" style={{ borderBottom: `1px solid ${T.border}` }}><span style={{ color: T.text }}>{k}</span><span className="text-xs tabular-nums" style={{ color: c }}>{a}, {b}</span></div>)}
-            <div className="text-xs mt-2" style={{ color: T.muted }}>Routing cheap tasks to small models keeps frontier-model spend on judgment-heavy work.</div>
+            <SectionTitle>Cost profile, last 30 days</SectionTitle>
+            {[["Small and local models", 71, 18, T.green], ["Advanced models", 29, 82, T.accent]].map(([k, a, b, c]) => <div key={k} style={{ marginBottom: 10 }}><div className="flex items-center justify-between" style={{ fontSize: 13 }}><span style={{ color: T.text }}>{k}</span><span className="tabular-nums" style={{ color: T.muted, fontSize: 12 }}>{a}% of tasks · {b}% of spend</span></div><div className="rounded" style={{ height: 4, background: T.soft, marginTop: 4 }}><div className="rounded" style={{ height: 4, width: `${b}%`, background: c }} /></div></div>)}
+            <div style={{ fontSize: 12, color: T.muted }}>Routing cheap tasks to small models keeps frontier-model spend on judgment-heavy work.</div>
           </Card>
         </div>
       </div>
@@ -1768,26 +1911,30 @@ function AgentActivity() {
 /* ---------- Evaluations ---------- */
 function Evaluations() {
   const [set, setSet] = useState("CIM Extraction");
-  const metrics = [["Company classification accuracy", "96.4%"], ["Financial extraction accuracy", "98.1%"], ["Citation coverage", "94.7%"], ["Unsupported claim rate", "2.8%"], ["Human agreement rate", "89.2%"]];
-  const sets = { "Historical Target Qualification": [["Classify: Ridgeway Silicone Molding", "Medical Components, Strong fit", "Medical Components, Strong fit", true, "Matches analyst label"], ["Classify: Brightline Composite Works", "Monitor (PE-backed)", "Potential fit", false, "Ownership exclusion missed; rule added"], ["Revenue band: Nova Polymer", "$15M-$20M", "$16M-$21M", true, "Within tolerance"]], "CIM Extraction": [["Falcon adjusted EBITDA", "$5.1M", "$5.1M", true, "Exact match, p. 71"], ["Falcon top customer share", "31%", "31%", true, "p. 48"], ["Falcon capex FY2025", "$2.4M", "$2.1M", false, "Picked maintenance capex only; prompt revised"], ["Orion employee count", "94", "94", true, ""]], "Investment Memo Generation": [["Every risk has a citation", "12 of 12", "10 of 12", false, "Two claims flagged unsupported"], ["Executive summary under 150 words", "Yes", "Yes", true, ""]], "Red-Team Analysis": [["Identifies concentration risk", "Yes", "Yes", true, ""], ["Finds recurring adjustment", "Yes", "Yes", true, "Cross-checked prior years"], ["Avoids fabricated evidence", "0 fabricated", "0 fabricated", true, ""]], "Outreach Personalization": [["References verified fact only", "Yes", "Yes", true, ""], ["No inferred fact stated as certain", "Yes", "No", false, "Stated succession as fact; corrected to inferred"]] };
+  const sets = { "Historical Target Qualification": [["Classify: Ridgeway Silicone Molding", "Medical Components, Strong fit", "Medical Components, Strong fit", true, "Matches analyst label"], ["Classify: Brightline Composite Works", "Monitor (PE-backed)", "Potential fit", false, "Ownership exclusion missed; rule added"], ["Revenue band: Nova Polymer", "$15M to $20M", "$16M to $21M", true, "Within tolerance"]], "CIM Extraction": [["Falcon adjusted EBITDA", "$5.1M", "$5.1M", true, "Exact match, p. 71"], ["Falcon top customer share", "31%", "31%", true, "p. 48"], ["Falcon capex FY2025", "$2.4M", "$2.1M", false, "Picked maintenance capex only; prompt revised"], ["Orion employee count", "94", "94", true, ""]], "Investment Memo Generation": [["Every risk has a citation", "12 of 12", "10 of 12", false, "Two claims flagged unsupported"], ["Executive summary under 150 words", "Yes", "Yes", true, ""]], "Red-Team Analysis": [["Identifies concentration risk", "Yes", "Yes", true, ""], ["Finds recurring adjustment", "Yes", "Yes", true, "Cross-checked prior years"], ["Avoids fabricated evidence", "0 fabricated", "0 fabricated", true, ""]], "Outreach Personalization": [["References verified fact only", "Yes", "Yes", true, ""], ["No inferred fact stated as certain", "Yes", "No", false, "Stated succession as fact; corrected to inferred"]] };
   const rows = sets[set];
-  const passRate = Math.round((rows.filter((r) => r[3]).length / rows.length) * 100);
+  const rate = (r) => Math.round((r.filter((x) => x[3]).length / r.length) * 100);
+  const passRate = rate(rows);
+  const dot = (r) => (rate(r) === 100 ? T.green : rate(r) >= 60 ? T.amber : T.red);
   return (
     <div>
-      <PageHeader title="Evaluation Center" sub="Every agent version is tested against labeled cases before its output reaches the investment team. Cases below include Project Falcon and Precision MedTech Solutions." crumbs={["System", "Evaluations"]} right={<Demo>Demo metrics</Demo>} />
-      <div className="grid grid-cols-5 gap-3 mb-4">
-        {metrics.map(([k, v]) => <Card key={k}><div className="text-xs" style={{ color: T.muted }}>{k}</div><div className="text-xl font-semibold tabular-nums mt-0.5" style={{ color: k.startsWith("Unsupported") ? T.amber : T.text }}>{v}</div></Card>)}
+      <PageHeader title="Evaluation Center" sub="Every agent version is tested against labeled cases before its output reaches the investment team." crumbs={["System", "Evaluations"]} demo="Demo metrics" />
+      <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr 1fr 1.3fr", marginBottom: 24 }}>
+        <Metric k="Citation coverage" v="94.7%" color={T.green} />
+        <Metric k="Unsupported claim rate" v="2.8%" color={T.amber} />
+        <Metric k="Human agreement rate" v="89.2%" />
+        <Card className="py-2"><Metric secondary k="Classification accuracy" v="96.4%" /><div className="flex items-baseline justify-between py-2"><span style={{ color: T.muted, fontSize: 12 }}>Extraction accuracy</span><span className="tabular-nums font-semibold" style={{ color: T.text, fontSize: 15 }}>98.1%</span></div></Card>
       </div>
       <div className="grid grid-cols-4 gap-4">
         <Card>
           <SectionTitle>Evaluation sets</SectionTitle>
-          {Object.keys(sets).map((s) => <button key={s} onClick={() => setSet(s)} className="w-full text-left text-sm px-2 py-1.5 rounded mb-1" style={{ background: set === s ? T.accentSoft : "transparent", color: set === s ? T.accent : T.text }}>{s}<span className="block text-xs" style={{ color: T.muted }}>{sets[s].length} cases</span></button>)}
+          {Object.keys(sets).map((s) => <button key={s} onClick={() => setSet(s)} className="w-full text-left px-2.5 py-2 mb-1 flex items-start gap-2" style={{ borderRadius: R.ctl, background: set === s ? T.accentSoft : "transparent", fontSize: 13 }}><span className="mt-1.5 w-2 h-2 rounded-full shrink-0" style={{ background: dot(sets[s]) }} /><span><span style={{ color: set === s ? T.accent : T.text, fontWeight: set === s ? 600 : 400 }}>{s}</span><span className="block" style={{ fontSize: 11, color: T.muted }}>{sets[s].length} cases · {rate(sets[s])}% pass</span></span></button>)}
         </Card>
         <Card pad={false} className="col-span-3">
-          <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: `1px solid ${T.border}` }}><span className="text-sm font-semibold" style={{ color: T.text }}>{set}</span><span className="text-xs" style={{ color: passRate === 100 ? T.green : T.amber }}>Pass rate {passRate}%</span></div>
-          <table className="w-full text-sm"><thead><tr className="text-xs" style={{ color: T.muted }}>{["Test case", "Expected", "Actual", "Result", "Reviewer notes"].map((h) => <th key={h} className="text-left font-medium px-4 py-2" style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
-            <tbody>{rows.map(([t, e, a, p, n]) => <tr key={t} style={{ borderBottom: `1px solid ${T.border}` }}><td className="px-4 py-2" style={{ color: T.text }}>{t}</td><td className="px-4 py-2 tabular-nums" style={{ color: T.muted }}>{e}</td><td className="px-4 py-2 tabular-nums" style={{ color: T.text }}>{a}</td><td className="px-4 py-2"><span className="text-xs px-2 py-0.5 rounded font-medium" style={{ background: p ? T.greenSoft : T.redSoft, color: p ? T.green : T.red }}>{p ? "Pass" : "Fail"}</span></td><td className="px-4 py-2 text-xs" style={{ color: T.muted }}>{n}</td></tr>)}</tbody></table>
-          <div className="px-4 py-2 text-xs" style={{ color: T.muted }}>Failures create a corrected case and a prompt or rule change. The set is re-run before any agent version is promoted.</div>
+          <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: `1px solid ${T.border}` }}><span style={{ fontSize: 15, fontWeight: 600, color: T.text }}>{set}</span><Pri p={passRate === 100 ? "healthy" : passRate >= 60 ? "review" : "critical"} label={`Pass rate ${passRate}%`} /></div>
+          <table className="w-full" style={{ fontSize: 13 }}><thead><tr style={{ color: T.muted, fontSize: 11 }}>{["Test case", "Expected", "Actual", "Result", "Reviewer notes"].map((h) => <th key={h} className="text-left font-medium px-4 py-2" style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
+            <tbody>{rows.map(([t, e, a, p, n]) => <tr key={t} style={{ borderBottom: `1px solid ${T.border}` }}><td className="px-4 py-2.5" style={{ color: T.text }}>{t}</td><td className="px-4 py-2.5 tabular-nums" style={{ color: T.muted }}>{e}</td><td className="px-4 py-2.5 tabular-nums" style={{ color: T.text }}>{a}</td><td className="px-4 py-2.5"><Pri p={p ? "healthy" : "critical"} label={p ? "Pass" : "Fail"} /></td><td className="px-4 py-2.5" style={{ color: T.muted, fontSize: 12 }}>{n}</td></tr>)}</tbody></table>
+          <div className="px-4 py-2" style={{ fontSize: 11, color: T.muted }}>Failures create a corrected case and a prompt or rule change. The set is re-run before any agent version is promoted.</div>
         </Card>
       </div>
     </div>
@@ -1835,11 +1982,20 @@ export default function App() {
     evals: <Evaluations />,
   }[route];
   return (
-    <div className="flex min-h-screen" style={{ background: T.bg, color: T.text, ...FONT }}>
+    <div className="flex min-h-screen" style={{ background: T.bg, color: T.text, WebkitFontSmoothing: "antialiased", MozOsxFontSmoothing: "grayscale", ...FONT }}>
+      <style>{`
+        button, a, tr, input, select { transition: ${EASE}; }
+        ::-webkit-scrollbar { width: 10px; height: 10px; } ::-webkit-scrollbar-thumb { background: rgba(15,28,46,0.18); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; } ::-webkit-scrollbar-track { background: transparent; }
+        select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235F6B7A' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 30px !important; }
+        input[type=range] { accent-color: ${T.accent}; } input[type=checkbox] { accent-color: ${T.accent}; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        main > div { animation: fadeUp 240ms cubic-bezier(.2,.8,.2,1); }
+        table tbody tr { transition: background 120ms ease; }
+      `}</style>
       <Sidebar route={route} go={go} collapsed={collapsed} setCollapsed={setCollapsed} />
       <div className="flex-1 min-w-0">
         <Topbar openSearch={() => setSearch(true)} openAsk={() => setAsk(true)} />
-        <main className="p-5" style={{ marginRight: ask ? 420 : 0, transition: "margin 150ms" }}>{page}</main>
+        <main style={{ padding: "24px 32px", maxWidth: 1440, marginRight: ask ? 420 : 0, transition: "margin 150ms" }}>{page}</main>
       </div>
       {search && <GlobalSearch onClose={() => setSearch(false)} go={go} openCompany={openCompany} />}
       {ask && <AskPanel ctx={ctx} onClose={() => setAsk(false)} />}

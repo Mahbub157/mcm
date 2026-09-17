@@ -217,6 +217,95 @@ Organize these into the schema. Never invent.`,
     },
     validate: (d) => isObj(d) && str(d.overview) && arr(d.metrics) && arr(d.risks) && arr(d.missing_information) && arr(d.diligence_questions),
   },
+
+  /* -------------------------------------------------------------- ic_memo */
+  ic_memo: {
+    tool: "draft_ic_memo",
+    description: "Draft an investment committee memo from the supplied deal record. Analyst draft only.",
+    maxTokens: 4500,
+    system: HOUSE_RULES + `
+You are drafting an ANALYST DRAFT of an investment committee memo. It is not a recommendation
+of record; the deal team reviews and edits it. Every factual statement must trace to the deal
+context. Where a section has no support, write "Not enough evidence available." rather than
+filling it. Do not invent deal terms or figures. List each claim you could not support.`,
+    buildUser: ({ context }) => `DEAL RECORD (the only source of facts):
+${context}
+
+Draft the memo sections. Keep each section tight (60-160 words). Cite pages as "CIM p.N" where the record provides them.`,
+    schema: {
+      type: "object",
+      properties: {
+        sections: { type: "array", items: { type: "object", properties: {
+          title: { type: "string", enum: ["Executive Summary", "Company Overview", "Investment Thesis", "Strategic Fit", "Market", "Financial Performance", "Value Creation Plan", "Key Risks", "Red Team Findings", "Deal Structure", "Open Questions", "Recommendation"] },
+          body: { type: "string" }, citations: { type: "array", items: { type: "string" } },
+        }, required: ["title", "body", "citations"] } },
+        unsupported_claims: { type: "array", items: { type: "string" } },
+        gating_items: { type: "array", items: { type: "string" } },
+        next_decision: { type: "string" },
+        confidence: CONF,
+      },
+      required: ["sections", "unsupported_claims", "gating_items", "next_decision", "confidence"],
+    },
+    validate: (d) => isObj(d) && arr(d.sections) && d.sections.length >= 6 && arr(d.unsupported_claims) && str(d.next_decision),
+  },
+
+  /* ------------------------------------------------------ knowledge_search */
+  knowledge_search: {
+    tool: "answer_from_knowledge",
+    description: "Answer a question using only the retrieved institutional knowledge records.",
+    maxTokens: 1500,
+    system: HOUSE_RULES + `
+You answer from retrieved institutional records only. Each record carries a provenance label:
+synthetic institutional example, uploaded document, generated analysis, or analyst-approved finding.
+Keep those labels attached to whatever you use. Prefer analyst-approved findings and uploaded
+documents over generated analysis, and treat synthetic examples as illustrative patterns, not facts.`,
+    buildUser: ({ question, records }) => `QUESTION: ${question}
+
+RETRIEVED RECORDS:
+${records}
+
+Answer with a short synthesis and the supporting records.`,
+    schema: {
+      type: "object",
+      properties: {
+        answer: { type: "string" },
+        supporting: { type: "array", items: { type: "object", properties: { record_id: { type: "string" }, provenance: { type: "string", enum: ["synthetic", "uploaded", "generated", "approved"] }, point: { type: "string" } }, required: ["record_id", "provenance", "point"] } },
+        gaps: { type: "array", items: { type: "string" } },
+        enough_evidence: { type: "boolean" },
+      },
+      required: ["answer", "supporting", "gaps", "enough_evidence"],
+    },
+    validate: (d) => isObj(d) && str(d.answer) && arr(d.supporting) && arr(d.gaps),
+  },
+
+  /* ------------------------------------------------------- outreach_draft */
+  outreach_draft: {
+    tool: "draft_outreach",
+    description: "Draft a first-touch email to a business owner using only verified facts.",
+    maxTokens: 900,
+    system: HOUSE_RULES + `
+You draft outreach on behalf of an MCM investment professional. Use only facts marked confirmed
+as statements; anything inferred or estimated may be alluded to without asserting it (for
+example, refer to "the company's next chapter" rather than claiming the founder is planning
+succession). No flattery, no jargon, no urgency tactics. The email is a draft; a human approves
+and sends it. Keep to the requested tone and objective.`,
+    buildUser: ({ company, facts, relationship, tone, objective, adjust, current }) => `COMPANY: ${company}
+VERIFIED AND INFERRED FACTS (with status):
+${facts}
+RELATIONSHIP CONTEXT: ${relationship}
+TONE: ${tone}
+OBJECTIVE: ${objective}
+${adjust ? `ADJUSTMENT REQUESTED: ${adjust}
+CURRENT DRAFT:
+${current}
+` : ""}Write the email body only (no subject line), 70-160 words, signed by Chris Hren, MCM Capital Partners.`,
+    schema: {
+      type: "object",
+      properties: { body: { type: "string" }, facts_used: { type: "array", items: { type: "string" } }, avoided_as_unverified: { type: "array", items: { type: "string" } } },
+      required: ["body", "facts_used", "avoided_as_unverified"],
+    },
+    validate: (d) => isObj(d) && str(d.body) && arr(d.facts_used),
+  },
 };
 
 /* Conceptual model tiers. The server maps a tier to a concrete model id via env. */
@@ -226,6 +315,9 @@ export const TASK_TIER = {
   thesis_analysis: "balanced",
   red_team: "advanced",
   document_normalize: "balanced",
+  ic_memo: "advanced",
+  knowledge_search: "balanced",
+  outreach_draft: "balanced",
 };
 
 function isObj(x) { return x && typeof x === "object" && !Array.isArray(x); }

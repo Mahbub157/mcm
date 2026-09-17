@@ -36,3 +36,9 @@ CIM Analyzer accepts a PDF (up to 3 MB, up to 100 pages) and sends it to `/api/d
 Two synthetic test documents ship in `public/samples/`: `falcon-cim-synthetic.pdf` (8 pages) and `falcon-august-operating-report.pdf` (3 pages, shows a 44% customer concentration that conflicts with the CIM's 31%).
 
 The PDF is held in memory for the request only; nothing is written to disk or stored in the browser. Live analysis requires the API key; in Demo mode the upload control is disabled and the synthetic CIM remains available.
+
+## Workflow state (Phase 4)
+
+Company Analysis, Red Team and CIM Analyzer can push questions into the Due Diligence tracker ("Push to diligence"). Each question keeps its workstream, source and page, severity, creator, and a human-controlled status and owner. IC Memo drafts are generated from the full deal record (deal context, latest document extraction, red team findings and dispositions, diligence tracker, resolved conflicts) and always carry the review disclaimer; Refresh keeps the previous version for comparison. MCM Knowledge retrieves records lexically (synthetic examples, uploaded documents, generated analyses, analyst-approved findings) and asks Claude to synthesize only from what was retrieved, keeping provenance labels attached. Outreach drafts use confirmed facts only and list what was held back as unverified; nothing is sent.
+
+All of this lives in session state (`src/services/storage.jsx`) and survives navigation. Reset demo workspace on the Agent Activity page restores the synthetic dataset.

@@ -168,9 +168,9 @@ export async function analyzeCIM({ file }, { fallback, timeoutMs = 65_000, signa
   } finally { clearTimeout(timer); }
 }
 export const generateFounderQuestions = (input, opts) => callAi("ask", { question: "Draft questions for the founder.", context: input.context }, opts);
-export const generateOutreachDraft = (input, opts = {}) => Promise.resolve({ data: resolveFallback(opts.fallback), source: "demo", meta: { task: "outreach_draft", status: "not_implemented" } });
-export const generateICMemo = (input, opts = {}) => Promise.resolve({ data: resolveFallback(opts.fallback), source: "demo", meta: { task: "ic_memo", status: "not_implemented" } });
-export const searchKnowledge = (input, opts = {}) => Promise.resolve({ data: resolveFallback(opts.fallback), source: "demo", meta: { task: "knowledge_search", status: "not_implemented" } });
+export const generateOutreachDraft = (input, opts) => callAi("outreach_draft", input, opts);
+export const generateICMemo = (input, opts) => callAi("ic_memo", input, { preferredModelTier: "advanced", ...opts });
+export const searchKnowledge = (input, opts) => callAi("knowledge_search", input, opts);
 
 /*
  * useAiTask: small state machine for buttons and panels.

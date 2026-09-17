@@ -19,6 +19,9 @@ const EMPTY = {
   documents: {},       // dealName -> [{ id, name, source: uploaded, createdAt, pages, extraction, findings, meta }]
   conflicts: [],       // [{ id, deal, metric, previous: {value,page,source}, current: {value,page,source}, status: pending|accepted|kept|review, explanation, createdAt, resolvedAt }]
   events: [],          // intelligence feed [{ id, time, deal, kind, severity, title, detail, source, page }]
+  questions: [],       // diligence questions [{ id, deal, question, workstream, source, page, severity, status, owner, createdBy, createdAt, notes }]
+  memos: {},           // dealName -> { current: { data, source, meta, at }, previous }
+  outreach: {},        // companyId -> { body, tone, objective, source, at, factsUsed, avoided }
   research: [],        // research library records [{ id, title, type, deal, thesis, producedBy, created, sources, summary, findings }]
 };
 
@@ -49,6 +52,10 @@ export function WorkspaceProvider({ children }) {
       resolveConflict: (id, status) => update((w) => ({ ...w, conflicts: w.conflicts.map((c) => (c.id === id ? { ...c, status, resolvedAt: new Date().toISOString() } : c)) })),
       addEvents: (list) => update((w) => ({ ...w, events: [...list, ...w.events].slice(0, 200) })),
       addResearch: (rec) => update((w) => ({ ...w, research: [rec, ...w.research] })),
+      addQuestions: (list) => { const added = []; update((w) => { const existing = new Set(w.questions.map((q) => q.deal + "|" + q.question.toLowerCase().trim())); const fresh = list.filter((q) => !existing.has(q.deal + "|" + q.question.toLowerCase().trim())).map((q, i) => ({ id: `dq-${Date.now()}-${i}`, status: "Open", owner: "Unassigned", createdAt: new Date().toISOString(), notes: "", ...q })); added.push(...fresh); return { ...w, questions: [...fresh, ...w.questions] }; }); return added; },
+      updateQuestion: (id, patch) => update((w) => ({ ...w, questions: w.questions.map((q) => (q.id === id ? { ...q, ...patch } : q)) })),
+      setMemo: (deal, current) => update((w) => ({ ...w, memos: { ...w.memos, [deal]: { current, previous: w.memos[deal]?.current || null } } })),
+      setOutreach: (companyId, draft) => update((w) => ({ ...w, outreach: { ...w.outreach, [companyId]: draft } })),
       reset: () => { try { sessionStorage.removeItem(KEY); sessionStorage.removeItem("mcm.aiLog"); } catch {} setWs(EMPTY); },
     };
   }, [ws]);

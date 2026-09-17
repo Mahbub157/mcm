@@ -28,3 +28,11 @@ Locally, `npm run dev` runs the frontend only (Demo mode). To exercise the live 
 The top bar shows a small status: `Live AI` when the endpoint reports a configured key, otherwise `Demo mode`. Every live call falls back to the synthetic response if it fails, times out, or returns an invalid shape.
 
 Architecture: React components call `src/services/aiClient.js`, which posts `{ task, input }` to `/api/ai`. The endpoint forces a schema-valid structured response through Anthropic tool use, and the client validates it again before use. Task prompts and schemas live in `src/services/aiSchemas.js`.
+
+## Document analysis (CIM upload)
+
+CIM Analyzer accepts a PDF (up to 3 MB, up to 100 pages) and sends it to `/api/document`, which runs two passes: a grounded review with page citations, then normalization into the deal record that cannot add claims absent from the first pass. Extracted metrics are compared with the existing record; differences appear as data conflicts that an analyst resolves (accept, keep, or mark for review). Findings also create intelligence events on the Command Center and a record in the Research Library.
+
+Two synthetic test documents ship in `public/samples/`: `falcon-cim-synthetic.pdf` (8 pages) and `falcon-august-operating-report.pdf` (3 pages, shows a 44% customer concentration that conflicts with the CIM's 31%).
+
+The PDF is held in memory for the request only; nothing is written to disk or stored in the browser. Live analysis requires the API key; in Demo mode the upload control is disabled and the synthetic CIM remains available.

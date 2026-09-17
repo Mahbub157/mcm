@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { askIntelligence, analyzeCompany, analyzeThesis, runRedTeam, useAiMode, probeAiStatus, getAiModel, getAiLog } from "./services/aiClient.js";
+import { askIntelligence, analyzeCompany, analyzeThesis, runRedTeam, analyzeCIM, validateDocument, useAiMode, probeAiStatus, getAiModel, getAiLog } from "./services/aiClient.js";
 import { WorkspaceProvider, useWorkspace } from "./services/storage.jsx";
 import {
   LayoutGrid, Lightbulb, Radar, Building2, Network, Send, Kanban, FileText, ClipboardCheck,
@@ -641,11 +641,12 @@ function CommandCenter({ go, openCompany, setStageFilter }) {
   const auditEvents = ws.audit.slice(0, 4).map((e) => ({ agent: e.actor, text: `${e.action}${e.subject ? `: ${e.subject}` : ""}`, time: new Date(e.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), icon: e.kind === "human" ? Users : e.kind === "ai" ? Bot : Activity, kind: e.kind }));
   const events = [...auditEvents, ...AGENT_EVENTS].slice(0, 6);
   const funnel = [["Universe", 1284], ["Screened", 428], ["Qualified", 143], ["Priority", 37], ["Contacted", 21], ["Dialogue", 12], ["Diligence", 3], ["IC", 1]];
-  const attention = [
+  const liveAttention = ws.events.filter((e) => e.severity === "critical" || e.severity === "review").slice(0, 3).map((e) => ({ p: e.severity, t: `${e.deal}: ${e.title}`, d: `${e.detail}${e.page ? ` (${e.source}, p.${e.page})` : ` (${e.source})`}`, action: () => go("cim"), cta: "Open document" }));
+  const attention = [...liveAttention,
     { p: "critical", t: "Project Falcon", d: "Customer concentration increased from 31% to 44% in the latest data-room update.", action: () => go("diligence"), cta: "Open diligence" },
     { p: "review", t: "Apex Motion Systems", d: "Founder announced a succession planning initiative at an industry panel.", action: () => openCompany("ams"), cta: "Open company" },
     { p: "active", t: "Precision MedTech Solutions", d: "New target surfaced at fit 91. Awaiting deal team decision on priority.", action: () => openCompany("pms"), cta: "Review fit" },
-  ];
+  ].slice(0, 3);
   return (
     <div>
       <div className="flex items-start justify-between" style={{ marginBottom: 24 }}>
@@ -669,10 +670,10 @@ function CommandCenter({ go, openCompany, setStageFilter }) {
       </div>
 
       <Card style={{ marginBottom: 24 }}>
-        <SectionTitle right={<span style={{ color: T.muted, fontSize: 12 }}>3 items require review</span>}>Needs attention</SectionTitle>
+        <SectionTitle right={<span style={{ color: T.muted, fontSize: 12 }}>{ws.events.length ? `${ws.events.length} intelligence events this session` : "3 items require review"}</span>}>Needs attention</SectionTitle>
         <div className="grid grid-cols-3 gap-4">
-          {attention.map((a) => (
-            <button key={a.t} onClick={a.action} className="text-left p-4" style={{ background: PRI[a.p][1], borderRadius: R.card, transition: EASE }} onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-2px)"} onMouseLeave={(e) => e.currentTarget.style.transform = "none"}>
+          {attention.map((a, ai) => (
+            <button key={ai} onClick={a.action} className="text-left p-4" style={{ background: PRI[a.p][1], borderRadius: R.card, transition: EASE }} onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-2px)"} onMouseLeave={(e) => e.currentTarget.style.transform = "none"}>
               <Pri p={a.p} />
               <div className="mt-2" style={{ color: T.text, fontSize: 14, fontWeight: 600 }}>{a.t}</div>
               <div style={{ color: T.muted, fontSize: 12, marginTop: 4, lineHeight: 1.5 }}>{a.d}</div>
@@ -1565,123 +1566,300 @@ function Pipeline({ go }) {
 
 /* ---------- CIM Analyzer ---------- */
 const CIM_EXCERPTS = {
-  "CIM p. 23": "Falcon Precision Technologies generated $38.2M in FY2025 revenue, an 8.1% increase over FY2024, driven primarily by two aerospace platform ramps.",
-  "CIM p. 48": "Customer A represented 31% of FY2025 revenue. The top five customers represented 64%. The current supply agreement with Customer A runs through Q3 2028.",
-  "CIM p. 58": "Management projects 12% revenue CAGR through FY2028, of which approximately two thirds is attributable to Program X and Program Y volumes.",
-  "CIM p. 71": "Adjusted EBITDA of $5.1M includes $740K of adjustments for owner compensation normalization, one-time legal costs and a facility relocation.",
-  "CIM p. 84": "The company operates 42 CNC machines across two facilities with an estimated 78% utilization on a two-shift basis.",
-  "CIM p. 92": "Senior leadership consists of the CEO/owner, a COO with 11 years of tenure, and a CFO hired in 2023.",
+  23: "Falcon Precision Technologies generated $38.2M in FY2025 revenue, an 8.1% increase over FY2024, driven primarily by two aerospace platform ramps.",
+  48: "Customer A represented 31% of FY2025 revenue. The top five customers represented 64%. The current supply agreement with Customer A runs through Q3 2028.",
+  58: "Management projects 12% revenue CAGR through FY2028, of which approximately two thirds is attributable to Program X and Program Y volumes.",
+  71: "Adjusted EBITDA of $5.1M includes $740K of adjustments for owner compensation normalization, one-time legal costs and a facility relocation.",
+  84: "The company operates 42 CNC machines across two facilities with an estimated 78% utilization on a two-shift basis.",
+  92: "Senior leadership consists of the CEO/owner, a COO with 11 years of tenure, and a CFO hired in 2023.",
 };
+/* The synthetic CIM, expressed in the same shape the live pipeline produces. */
+const DEMO_CIM_DOC = {
+  id: "demo-falcon-cim", name: "Falcon CIM (synthetic, 142 pages)", source: "demo", deal: "Project Falcon", pages: 142, createdAt: null,
+  meta: { pagesCited: 41, findingsCount: 27 },
+  findings: Object.entries(CIM_EXCERPTS).map(([page, excerpt]) => ({ text: excerpt, page: Number(page), excerpt })),
+  extraction: {
+    company_name: "Falcon Precision Technologies", investment_fit: "strong", confidence: "high",
+    overview: "Falcon Precision Technologies is an AS9100-certified manufacturer of precision aerospace components operating two facilities with 168 employees. FY2025 revenue was $38.2M with adjusted EBITDA of $5.1M. Customer A represents 31% of revenue under an agreement running through Q3 2028.",
+    metrics: [
+      { metric: "Revenue", label: "Revenue", value: "$38.2M", period: "FY2025", prior: ["$32.9M", "$35.3M"], change: "8.1%", page: 23, status: "confirmed", confidence: "high" },
+      { metric: "Gross profit", label: "Gross profit", value: "$13.5M", period: "FY2025", prior: ["$11.0M", "$12.1M"], change: "11.6%", page: 23, status: "confirmed", confidence: "high" },
+      { metric: "Gross margin", label: "Gross margin", value: "35.4%", period: "FY2025", prior: ["33.4%", "34.2%"], change: "+120 bps", page: 23, status: "confirmed", confidence: "high" },
+      { metric: "Reported EBITDA", label: "Reported EBITDA", value: "$4.4M", period: "FY2025", prior: ["$3.6M", "$3.9M"], change: "12.8%", page: 71, status: "confirmed", confidence: "high" },
+      { metric: "EBITDA adjustments", label: "Adjustments", value: "$0.7M", period: "FY2025", prior: ["$0.5M", "$0.6M"], change: "", page: 71, status: "confirmed", confidence: "high", flag: "risk" },
+      { metric: "Adjusted EBITDA", label: "Adjusted EBITDA", value: "$5.1M", period: "FY2025", prior: ["$4.1M", "$4.5M"], change: "13.3%", page: 71, status: "confirmed", confidence: "high" },
+      { metric: "Adjusted EBITDA margin", label: "Adj. EBITDA margin", value: "13.4%", period: "FY2025", prior: ["12.5%", "12.7%"], change: "+70 bps", page: 71, status: "confirmed", confidence: "high" },
+      { metric: "Capex", label: "Capex", value: "$2.4M", period: "FY2025", prior: ["$1.9M", "$2.1M"], change: "", page: 84, status: "confirmed", confidence: "high" },
+      { metric: "Employees", label: "Employees", value: "168", period: "FY2025", prior: ["151", "160"], change: "", page: 92, status: "confirmed", confidence: "high" },
+      { metric: "Top customer share", label: "Top customer share", value: "31%", period: "FY2025", prior: ["29%", "30%"], change: "", page: 48, status: "confirmed", confidence: "high", flag: "risk" },
+      { metric: "Top 5 customer share", label: "Top 5 customer share", value: "64%", period: "FY2025", prior: ["61%", "62%"], change: "", page: 48, status: "confirmed", confidence: "high", flag: "risk" },
+      { metric: "Net working capital", label: "Net working capital", value: "Not disclosed", period: "", prior: ["", ""], change: "", page: null, status: "unknown", confidence: "low" },
+    ],
+    investment_highlights: [{ text: "Precision aerospace components with AS9100 certification and long qualification cycles.", page: 23, status: "confirmed", confidence: "high" }, { text: "Gross margin of 35.4% sits above MCM's 30% manufacturing threshold.", page: 23, status: "confirmed", confidence: "high" }, { text: "Two-facility footprint with capacity headroom on a third shift.", page: 84, status: "inferred", confidence: "medium" }],
+    risks: [{ text: "Top customer at 31% and top five at 64%; agreement expires Q3 2028.", page: 48, status: "confirmed", confidence: "high", severity: "high" }, { text: "Growth projection depends heavily on two programs.", page: 58, status: "confirmed", confidence: "high", severity: "medium" }, { text: "$740K of EBITDA adjustments require validation.", page: 71, status: "confirmed", confidence: "high", severity: "high" }],
+    customer_concentration: [{ text: "Customer A 31%, B 12%, C 9%, D 7%, E 5%. Customer A agreement through Q3 2028; pricing mechanics not disclosed.", page: 48, status: "confirmed", confidence: "high" }],
+    end_market_exposure: [{ text: "Commercial aerospace 58%, defense 27%, industrial 15%.", page: 58, status: "confirmed", confidence: "high" }],
+    facilities_and_operations: [{ text: "42 CNC machines, estimated 78% utilization on two shifts.", page: 84, status: "confirmed", confidence: "high" }],
+    management: [{ text: "CEO/owner, tenured COO, CFO hired 2023. Succession not addressed in CIM.", page: 92, status: "confirmed", confidence: "high" }],
+    ebitda_adjustments: [{ text: "Owner compensation normalization, one-time legal costs and a facility relocation total $740K.", page: 71, status: "confirmed", confidence: "high" }],
+    inconsistencies: [],
+    missing_information: [{ text: "Customer contract copies", why_it_matters: "Renewal and change-of-control terms drive the concentration risk." }, { text: "Quality metrics (scrap, on-time delivery)", why_it_matters: "Operational diligence baseline." }, { text: "Working capital seasonality", why_it_matters: "Affects closing balance sheet and pricing." }],
+    diligence_questions: [{ question: "What are the renewal terms and pricing mechanics with Customer A?", workstream: "Commercial", page: 48, severity: "high" }, { question: "Which adjustments in the $740K are truly non-recurring?", workstream: "Financial", page: 71, severity: "high" }, { question: "What is the CEO's post-transaction role and timeline?", workstream: "Management", page: 92, severity: "medium" }],
+  },
+};
+const DOC_STAGES = ["Reading document", "Extracting financials with page citations", "Reviewing customer concentration", "Identifying missing information", "Normalizing into the deal record", "Checking for conflicts with existing facts"];
+const CONFLICT_METRICS = ["Revenue", "Gross margin", "Reported EBITDA", "EBITDA adjustments", "Adjusted EBITDA", "Adjusted EBITDA margin", "Capex", "Employees", "Top customer share", "Top 5 customer share"];
+const normVal = (v) => String(v || "").toLowerCase().replace(/[\s,$]/g, "").replace(/million|mm/g, "m");
+function detectConflicts(deal, prevDoc, newDoc) {
+  const out = [];
+  for (const m of CONFLICT_METRICS) {
+    const a = prevDoc.extraction.metrics.find((x) => x.metric === m && x.status !== "unknown");
+    const b = newDoc.extraction.metrics.find((x) => x.metric === m && x.status !== "unknown");
+    if (!a || !b) continue;
+    if (normVal(a.value) === normVal(b.value)) continue;
+    out.push({
+      id: `cf-${Date.now()}-${m.replace(/\W/g, "")}`, deal, metric: m, status: "pending", createdAt: new Date().toISOString(),
+      previous: { value: a.value, period: a.period || "", page: a.page, source: prevDoc.name },
+      current: { value: b.value, period: b.period || "", page: b.page, source: newDoc.name },
+      explanation: a.period && b.period && a.period !== b.period ? `Periods differ (${a.period} vs ${b.period}); the figures may not be comparable.` : /customer/i.test(m) ? "May reflect monthly or quarterly mix rather than LTM concentration." : "Definitions or periods may differ between documents. Reconcile before relying on either value.",
+      action: /customer/i.test(m) ? "Reconcile LTM and period customer concentration with management." : `Reconcile ${m} between the two sources and record the basis.`,
+    });
+  }
+  return out;
+}
+function eventsFromDocument(deal, doc, conflicts) {
+  const t = new Date().toISOString();
+  const ev = [];
+  const ex = doc.extraction;
+  ex.metrics.filter((m) => m.status !== "unknown" && ["Revenue", "Adjusted EBITDA", "Gross margin", "Top customer share"].includes(m.metric)).slice(0, 4).forEach((m) => ev.push({ id: `ev-${Date.now()}-${ev.length}`, time: t, deal, kind: "financial", severity: "active", title: "New financial information", detail: `${m.label}${m.period ? ` ${m.period}` : ""}: ${m.value}`, source: doc.name, page: m.page }));
+  ex.risks.forEach((r) => ev.push({ id: `ev-${Date.now()}-${ev.length}`, time: t, deal, kind: "risk", severity: r.severity === "high" ? "critical" : "review", title: "Material risk identified", detail: r.text, source: doc.name, page: r.page }));
+  conflicts.forEach((c) => ev.push({ id: `ev-${Date.now()}-${ev.length}`, time: t, deal, kind: "conflict", severity: "critical", title: "Data conflict detected", detail: `${c.metric}: ${c.previous.value} (${c.previous.source}, p.${c.previous.page}) vs ${c.current.value} (${c.current.source}, p.${c.current.page})`, source: doc.name, page: c.current.page }));
+  ex.missing_information.slice(0, 3).forEach((m) => ev.push({ id: `ev-${Date.now()}-${ev.length}`, time: t, deal, kind: "missing", severity: "review", title: "Missing information", detail: m.text, source: doc.name, page: null }));
+  ex.diligence_questions.slice(0, 3).forEach((q) => ev.push({ id: `ev-${Date.now()}-${ev.length}`, time: t, deal, kind: "question", severity: "active", title: "Diligence question created", detail: q.question, source: doc.name, page: q.page }));
+  return ev;
+}
+
 function CIMAnalyzer({ go, notify }) {
-  const [src, setSrc] = useState("CIM p. 48");
+  const { ws, addDocument, addConflicts, resolveConflict, addEvents, addResearch, audit } = useWorkspace();
+  const deal = "Project Falcon";
+  const uploaded = ws.documents[deal] || [];
+  const docs = [...uploaded, DEMO_CIM_DOC];
+  const [docId, setDocId] = useState(uploaded[0]?.id || DEMO_CIM_DOC.id);
+  const doc = docs.find((d) => d.id === docId) || DEMO_CIM_DOC;
+  const ex = doc.extraction;
+  const [page, setPage] = useState(48);
   const [review, setReview] = useState({});
-  const Cite = ({ p }) => <button onClick={() => setSrc(p)} className="tabular-nums ml-1 px-1 rounded-lg" style={{ color: T.accent, background: src === p ? T.accentSoft : "transparent", border: `1px solid ${src === p ? T.accent + "55" : "transparent"}` }}>{p}</button>;
-  const fin = [
-    ["Revenue", "$32.9M", "$35.3M", "$38.2M", "8.1%", "CIM p. 23", "confirmed"],
-    ["Gross profit", "$11.0M", "$12.1M", "$13.5M", "11.6%", "CIM p. 23", "confirmed"],
-    ["Gross margin", "33.4%", "34.2%", "35.4%", "+120 bps", "CIM p. 23", "confirmed"],
-    ["Reported EBITDA", "$3.6M", "$3.9M", "$4.4M", "12.8%", "CIM p. 71", "confirmed"],
-    ["Adjustments", "$0.5M", "$0.6M", "$0.7M", "", "CIM p. 71", "risk"],
-    ["Adjusted EBITDA", "$4.1M", "$4.5M", "$5.1M", "13.3%", "CIM p. 71", "confirmed"],
-    ["Adj. EBITDA margin", "12.5%", "12.7%", "13.4%", "+70 bps", "CIM p. 71", "confirmed"],
-    ["Capex", "$1.9M", "$2.1M", "$2.4M", "", "CIM p. 84", "confirmed"],
-    ["Employees", "151", "160", "168", "", "CIM p. 92", "confirmed"],
-    ["Top customer share", "29%", "30%", "31%", "", "CIM p. 48", "risk"],
-    ["Top 5 customer share", "61%", "62%", "64%", "", "CIM p. 48", "risk"],
-    ["Net working capital", "", "", "Not disclosed", "", "", "unknown"],
-  ];
+  const [upload, setUpload] = useState(false);
+  const [file, setFile] = useState(null);
+  const [fileErr, setFileErr] = useState(null);
+  const [processing, setProcessing] = useState(false);
+  const [liveErr, setLiveErr] = useState(null);
+  const mode = useAiMode();
+  const pagesCited = useMemo(() => [...new Set(doc.findings.map((f) => f.page))].sort((a, b) => a - b), [doc]);
+  const excerptsFor = (pg) => doc.findings.filter((f) => f.page === pg);
+  const Cite = ({ p }) => p == null ? <Level level="unknown" small /> : <button onClick={() => setPage(p)} className="tabular-nums ml-1 px-1 rounded-lg" style={{ color: T.accent, background: page === p ? T.accentSoft : "transparent", border: `1px solid ${page === p ? T.accent + "55" : "transparent"}` }}>p. {p}</button>;
+  const isDemo = doc.source === "demo";
+  const conflictsHere = ws.conflicts.filter((c) => c.deal === deal);
+  const pending = conflictsHere.filter((c) => c.status === "pending");
   const sections = [
-    ["Investment highlights", [["Precision aerospace components with AS9100 certification and long qualification cycles.", "CIM p. 23", "confirmed"], ["Gross margin of 35.4% sits above MCM's 30% manufacturing threshold.", "CIM p. 23", "confirmed"], ["Two-facility footprint with capacity headroom on a third shift.", "CIM p. 84", "inferred"]]],
-    ["Potential risks", [["Top customer at 31% and top five at 64%; agreement expires Q3 2028.", "CIM p. 48", "risk"], ["Growth projection depends heavily on two programs.", "CIM p. 58", "risk"], ["$740K of EBITDA adjustments require validation.", "CIM p. 71", "risk"]]],
-    ["Customer concentration", [["Customer A 31%, B 12%, C 9%, D 7%, E 5%. Customer A agreement through Q3 2028; pricing mechanics not disclosed.", "CIM p. 48", "confirmed"]]],
-    ["Market exposure", [["Commercial aerospace 58%, defense 27%, industrial 15%.", "CIM p. 58", "confirmed"]]],
-    ["Management", [["CEO/owner, tenured COO, CFO hired 2023. Succession not addressed in CIM.", "CIM p. 92", "confirmed"]]],
-    ["Operations", [["42 CNC machines, estimated 78% utilization on two shifts.", "CIM p. 84", "confirmed"]]],
-    ["Key diligence questions", [["What are the renewal terms and pricing mechanics with Customer A?", "CIM p. 48", null], ["Which adjustments in the $740K are truly non-recurring?", "CIM p. 71", null], ["What is the CEO's post-transaction role and timeline?", "CIM p. 92", null]]],
-    ["Missing information", [["Customer contract copies, quality metrics (scrap, on-time delivery), and working capital seasonality are not in the CIM.", null, "unknown"]]],
+    ["Investment highlights", ex.investment_highlights],
+    ["Potential risks", ex.risks],
+    ["Customer concentration", ex.customer_concentration],
+    ["Market exposure", ex.end_market_exposure],
+    ["Management", ex.management],
+    ["Operations", ex.facilities_and_operations],
+    ["EBITDA adjustments", ex.ebitda_adjustments],
+    ["Inconsistencies", ex.inconsistencies],
   ];
   const reviewed = Object.values(review).filter(Boolean).length;
+  const totalSections = sections.length + 2;
   const mark = (k) => setReview((r) => ({ ...r, [k]: !r[k] }));
+  const onPick = (f) => { setFile(f); setFileErr(validateDocument(f)); };
+  const analyze = async () => {
+    if (!file || fileErr) return;
+    setProcessing(true); setLiveErr(null);
+    audit({ actor: "M. Ahmed", kind: "human", action: "Uploaded document for analysis", subject: `${deal} · ${file.name}` });
+    const res = await analyzeCIM({ file }, { fallback: () => null });
+    if (res.source !== "live" || !res.data) {
+      setLiveErr(res.error || "The document could not be analyzed.");
+      audit({ actor: "System", kind: "system", action: "Document analysis failed", subject: file.name, detail: res.error || "" });
+      setProcessing(false); return;
+    }
+    const rec = { id: `doc-${Date.now()}`, name: file.name, source: "uploaded", deal, pages: res.data.pages, createdAt: new Date().toISOString(), meta: res.meta, findings: res.data.findings, extraction: res.data.extraction };
+    const prev = docs[0];
+    const conflicts = detectConflicts(deal, prev, rec);
+    const events = eventsFromDocument(deal, rec, conflicts);
+    addDocument(deal, rec); if (conflicts.length) addConflicts(conflicts); addEvents(events);
+    addResearch({ id: `rs-${Date.now()}`, title: `${rec.extraction.company_name || "Document"}: ${file.name}`, type: "Uploaded Document", deal, thesis: "Aerospace Precision Components", producedBy: "Document analysis", created: rec.createdAt, updated: rec.createdAt, sources: [`${file.name} (${res.data.pages} pages, ${res.meta.pagesCited} cited)`], summary: rec.extraction.overview, findings: rec.extraction.risks.map((r) => r.text) });
+    audit({ actor: "Claude document analysis", kind: "ai", action: `Extracted ${rec.extraction.metrics.length} metrics, ${rec.extraction.risks.length} risks, ${rec.extraction.diligence_questions.length} questions`, subject: file.name, detail: `${res.data.findings.length} cited findings across ${res.meta.pagesCited} pages · ${(res.meta.latencyMs / 1000).toFixed(1)}s${conflicts.length ? ` · ${conflicts.length} conflict${conflicts.length > 1 ? "s" : ""} detected` : ""}` });
+    setDocId(rec.id); setPage(rec.findings[0]?.page ?? null); setReview({}); setUpload(false); setFile(null); setProcessing(false);
+    notify(`Document analyzed. ${events.length} intelligence events created.`);
+  };
+  const resolve = (c, status) => { resolveConflict(c.id, status); audit({ actor: "M. Ahmed", kind: "human", action: `Conflict on ${c.metric}: ${status === "accepted" ? "accepted new value" : status === "kept" ? "kept existing value" : "marked for review"}`, subject: deal, detail: `${c.previous.value} vs ${c.current.value}` }); };
+  const fitLabel = { strong: ["Strong", T.green], potential: ["Potential", T.accent], weak: ["Weak", T.amber], unclear: ["Unclear", T.unknown] }[ex.investment_fit] || ["Unclear", T.unknown];
+  const hasPrior = ex.metrics.some((m) => m.prior && m.prior.some(Boolean));
   return (
     <div>
       <div className="flex items-center gap-1 text-xs mb-2" style={{ color: T.muted }}>
-        <span>Deals</span><ChevronRight size={12} /><button onClick={() => go("pipeline")} className="hover:underline">Deal Pipeline</button><ChevronRight size={12} /><span style={{ color: T.text }}>Project Falcon</span><ChevronRight size={12} /><span style={{ color: T.text }}>Preliminary CIM review</span>
+        <span>Deals</span><ChevronRight size={12} /><button onClick={() => go("pipeline")} className="hover:underline">Deal Pipeline</button><ChevronRight size={12} /><span style={{ color: T.text }}>{deal}</span><ChevronRight size={12} /><span style={{ color: T.text }}>Preliminary CIM review</span>
       </div>
       <Card pad={false} style={{ marginBottom: 24 }}>
         <div className="flex items-stretch">
           <div className="flex-1 p-5" style={{ borderRight: `1px solid ${T.border}` }}>
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="tracking-tight leading-tight" style={{ color: T.text, fontSize: 24, fontWeight: 700, margin: 0 }}>Project Falcon</h1>
-                <div className="text-xs mt-0.5" style={{ color: T.muted }}>Falcon Precision Technologies. Aerospace precision components. Received via intermediary. Stage: Diligence.</div>
-                <div className="flex items-center gap-1.5 mt-2">{["142-page CIM", "AS9100", "Aerospace Precision Components thesis", "Two facilities"].map((t) => <span key={t} className="text-xs px-1.5 py-0.5 rounded-lg" style={{ border: `1px solid ${T.border}`, color: T.text }}>{t}</span>)}</div>
+                <h1 className="tracking-tight leading-tight" style={{ color: T.text, fontSize: 24, fontWeight: 700, margin: 0 }}>{deal}</h1>
+                <div className="text-xs mt-0.5" style={{ color: T.muted }}>{ex.company_name || "Falcon Precision Technologies"}. Aerospace precision components. Received via intermediary. Stage: Diligence.</div>
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                  {docs.map((d) => <button key={d.id} onClick={() => { setDocId(d.id); setPage(d.findings[0]?.page ?? null); setReview({}); }} className="text-xs px-2 py-0.5 rounded-lg flex items-center gap-1.5" style={{ border: `1px solid ${docId === d.id ? T.accent : T.border}`, color: docId === d.id ? T.accent : T.text, background: docId === d.id ? T.accentSoft : "#fff" }}><FileText size={11} />{d.name}<span style={{ fontSize: 10, color: d.source === "demo" ? T.unknown : T.green }}>{d.source === "demo" ? "Demo" : "Uploaded"}</span></button>)}
+                  <Btn small icon={Plus} onClick={() => setUpload(!upload)}>{upload ? "Close" : "Analyze new document"}</Btn>
+                </div>
               </div>
-              <Demo>Synthetic CIM and citations</Demo>
+              <Demo>{isDemo ? "Synthetic CIM and citations" : "Uploaded source"}</Demo>
             </div>
           </div>
           <div className="w-80 p-5 grid grid-cols-2 gap-x-5">
-            <KV k="Investment fit" v={<span style={{ color: T.green }}>Strong</span>} />
-            <KV k="Extraction confidence" v="87%" />
-            <KV k="Pages cited" v="41 of 142" />
-            <KV k="Tables extracted" v="27" />
-            <KV k="Sections reviewed" v={<span style={{ color: reviewed === sections.length ? T.green : T.amber }}>{reviewed} of {sections.length}</span>} />
+            <KV k="Investment fit" v={<span style={{ color: fitLabel[1] }}>{fitLabel[0]}</span>} />
+            <KV k="Extraction confidence" v={isDemo ? "87%" : ex.confidence} />
+            <KV k="Pages cited" v={`${doc.meta?.pagesCited ?? pagesCited.length} of ${doc.pages}`} />
+            <KV k="Cited findings" v={doc.meta?.findingsCount ?? doc.findings.length} />
+            <KV k="Sections reviewed" v={<span style={{ color: reviewed === totalSections ? T.green : T.amber }}>{reviewed} of {totalSections}</span>} />
             <KV k="Review owner" v="B. Kingsbury" />
           </div>
         </div>
       </Card>
+
+      {upload && (
+        <Card style={{ marginBottom: 24 }}>
+          <SectionTitle right={mode !== "live" ? <Pri p="review" label="Live analysis not configured" /> : <Pri p="healthy" label="Live analysis available" />}>Analyze a new document</SectionTitle>
+          <div className="p-3 mb-3" style={{ background: T.amberSoft, color: T.amber, borderRadius: 10, fontSize: 12.5 }}>This prototype sends uploaded documents to the configured AI provider for analysis. Do not upload confidential material without authorization. Use the synthetic samples to test the workflow.</div>
+          <div className="grid grid-cols-12 gap-4 items-start">
+            <div className="col-span-7">
+              <label className="flex items-center gap-3 p-4 cursor-pointer" style={{ border: `1px dashed ${fileErr ? T.red : T.border}`, borderRadius: 12 }}>
+                <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => onPick(e.target.files?.[0] || null)} disabled={processing} />
+                <FileText size={20} style={{ color: T.muted }} />
+                <span style={{ fontSize: 13 }}>{file ? <span style={{ color: T.text }}>{file.name} <span style={{ color: T.muted }}>· {(file.size / 1024).toFixed(0)} KB</span></span> : <span style={{ color: T.muted }}>Choose a PDF (up to 3 MB, up to 100 pages)</span>}</span>
+              </label>
+              {fileErr && <div style={{ fontSize: 12, color: T.red, marginTop: 6 }}>{fileErr}</div>}
+              {liveErr && !processing && <div className="flex items-center justify-between gap-2 px-3 py-2 mt-3" style={{ background: T.amberSoft, color: T.amber, borderRadius: 10, fontSize: 12 }}><span>{liveErr} The existing analysis remains available.</span>{file && !fileErr && <button onClick={analyze} className="underline shrink-0">Retry</button>}</div>}
+              <div className="flex items-center gap-2 mt-3"><Btn primary icon={processing ? Loader2 : Play} onClick={analyze} disabled={!file || Boolean(fileErr) || processing || mode !== "live"}>{processing ? "Analyzing document" : "Analyze document"}</Btn><Btn onClick={() => { setUpload(false); setFile(null); setFileErr(null); }} disabled={processing}>Cancel</Btn></div>
+              {processing && <div style={{ marginTop: 12 }}><ProcessingStages stages={DOC_STAGES} label="Analyzing CIM..." /></div>}
+            </div>
+            <div className="col-span-5" style={{ fontSize: 12.5, color: T.muted, lineHeight: 1.6 }}>
+              <div style={{ fontWeight: 600, color: T.text, marginBottom: 4 }}>How it works</div>
+              Pass one reads the PDF with page citations enabled and records each finding with its page and excerpt. Pass two organizes those findings into the deal record and cannot add a claim that was not cited. New figures are compared with the existing record; differences become conflicts for you to resolve.
+              <div style={{ marginTop: 8 }}>Synthetic samples: <a href="/samples/falcon-cim-synthetic.pdf" download style={{ color: T.accent }}>Falcon CIM (8 pages)</a> · <a href="/samples/falcon-august-operating-report.pdf" download style={{ color: T.accent }}>August operating report (3 pages)</a></div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {pending.length > 0 && (
+        <Card style={{ marginBottom: 24, borderLeft: `3px solid ${T.red}` }}>
+          <SectionTitle right={<Pri p="critical" label={`${pending.length} pending`} />}>Data conflicts</SectionTitle>
+          <div className="space-y-3">
+            {pending.map((c) => (
+              <div key={c.id} className="grid grid-cols-12 gap-4 p-3" style={{ background: T.redSoft, borderRadius: 10 }}>
+                <div className="col-span-2"><div style={{ fontSize: 11, color: T.red }}>Metric</div><div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{c.metric}</div></div>
+                <div className="col-span-2"><div style={{ fontSize: 11, color: T.muted }}>Previous</div><div className="tabular-nums" style={{ fontSize: 15, fontWeight: 600, color: T.text }}>{c.previous.value}</div><div style={{ fontSize: 11, color: T.muted }}>{c.previous.source}, p.{c.previous.page}{c.previous.period ? ` · ${c.previous.period}` : ""}</div></div>
+                <div className="col-span-2"><div style={{ fontSize: 11, color: T.muted }}>New</div><div className="tabular-nums" style={{ fontSize: 15, fontWeight: 600, color: T.red }}>{c.current.value}</div><div style={{ fontSize: 11, color: T.muted }}>{c.current.source}, p.{c.current.page}{c.current.period ? ` · ${c.current.period}` : ""}</div></div>
+                <div className="col-span-3"><div style={{ fontSize: 11, color: T.muted }}>Potential explanation</div><div style={{ fontSize: 12, color: T.text }}>{c.explanation}</div><div style={{ fontSize: 11, color: T.muted, marginTop: 4 }}>Required action: {c.action}</div></div>
+                <div className="col-span-3 flex flex-col gap-1.5 justify-center"><Btn small primary onClick={() => resolve(c, "accepted")}>Accept new value</Btn><Btn small onClick={() => resolve(c, "kept")}>Keep existing value</Btn><Btn small onClick={() => resolve(c, "review")}>Mark for review</Btn></div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 11, color: T.muted, marginTop: 8 }}>Neither value is overwritten. Every resolution is recorded in the audit trail.</div>
+        </Card>
+      )}
+
       <div className="grid grid-cols-12 gap-3">
         <div className="col-span-8 space-y-3">
           <Card pad={false}>
             <div className="flex items-center justify-between px-3 py-1.5" style={{ borderBottom: `1px solid ${T.border}`, background: "#fafaf8" }}>
-              <span className="text-xs font-medium" style={{ color: T.text }}>Financial summary as presented in CIM ($ millions)</span>
-              <Legend levels={["confirmed", "risk", "unknown"]} />
+              <span className="text-xs font-medium" style={{ color: T.text }}>{isDemo ? "Financial summary as presented in CIM ($ millions)" : `Financial summary extracted from ${doc.name}`}</span>
+              <Legend levels={["confirmed", "estimated", "unknown"]} />
             </div>
             <table className="w-full text-xs">
-              <thead><tr style={{ color: T.muted }}>{["", "FY2023", "FY2024", "FY2025", "Growth / change", "Source", ""].map((h, i) => <th key={i} className={`font-medium px-3 py-1 ${i >= 1 && i <= 4 ? "text-right" : "text-left"}`} style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
-              <tbody>{fin.map(([m, a, b, c2, g, p, l]) => (
-                <tr key={m} style={{ borderBottom: `1px solid ${T.border}`, background: l === "risk" ? T.redSoft : "transparent" }}>
-                  <td className="px-3 py-1 font-medium" style={{ color: l === "unknown" ? T.unknown : T.text, paddingLeft: m.startsWith("Adj") || m === "Adjustments" ? 20 : 12 }}>{m}</td>
-                  <td className="px-3 py-1 text-right tabular-nums" style={{ color: T.muted }}>{a}</td>
-                  <td className="px-3 py-1 text-right tabular-nums" style={{ color: T.muted }}>{b}</td>
-                  <td className="px-3 py-1 text-right tabular-nums font-semibold" style={{ color: l === "unknown" ? T.unknown : l === "risk" ? T.red : T.text }}>{c2}</td>
-                  <td className="px-3 py-1 text-right tabular-nums" style={{ color: g.startsWith("+") || /^\d/.test(g) ? T.green : T.muted }}>{g}</td>
-                  <td className="px-3 py-1">{p && <Cite p={p} />}</td>
-                  <td className="px-3 py-1 text-right"><Level level={l} small /></td>
-                </tr>
-              ))}</tbody>
+              <thead><tr style={{ color: T.muted }}>{(hasPrior ? ["", "FY2023", "FY2024", "FY2025", "Growth / change", "Source", "Status"] : ["Metric", "Period", "Value", "Source", "Confidence", "Status"]).map((h, i) => <th key={i} className={`font-medium px-3 py-1 ${hasPrior ? (i >= 1 && i <= 4 ? "text-right" : "text-left") : (i === 2 ? "text-right" : "text-left")}`} style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
+              <tbody>{ex.metrics.map((m, i) => {
+                const risk = m.flag === "risk"; const unknown = m.status === "unknown";
+                return hasPrior ? (
+                  <tr key={i} style={{ borderBottom: `1px solid ${T.border}`, background: risk ? T.redSoft : "transparent" }}>
+                    <td className="px-3 py-1 font-medium" style={{ color: unknown ? T.unknown : T.text, paddingLeft: /adj/i.test(m.label) ? 20 : 12 }}>{m.label}</td>
+                    <td className="px-3 py-1 text-right tabular-nums" style={{ color: T.muted }}>{m.prior?.[0] || ""}</td>
+                    <td className="px-3 py-1 text-right tabular-nums" style={{ color: T.muted }}>{m.prior?.[1] || ""}</td>
+                    <td className="px-3 py-1 text-right tabular-nums font-semibold" style={{ color: unknown ? T.unknown : risk ? T.red : T.text }}>{m.value}</td>
+                    <td className="px-3 py-1 text-right tabular-nums" style={{ color: (m.change || "").startsWith("+") || /^\d/.test(m.change || "") ? T.green : T.muted }}>{m.change || ""}</td>
+                    <td className="px-3 py-1"><Cite p={m.page} /></td>
+                    <td className="px-3 py-1 text-right"><Level level={risk ? "risk" : LEVEL[m.status] ? m.status : "inferred"} small /></td>
+                  </tr>
+                ) : (
+                  <tr key={i} style={{ borderBottom: `1px solid ${T.border}` }}>
+                    <td className="px-3 py-1 font-medium" style={{ color: unknown ? T.unknown : T.text }}>{m.label}</td>
+                    <td className="px-3 py-1" style={{ color: T.muted }}>{m.period || ""}</td>
+                    <td className="px-3 py-1 text-right tabular-nums font-semibold" style={{ color: unknown ? T.unknown : T.text }}>{m.value}</td>
+                    <td className="px-3 py-1"><Cite p={m.page} /></td>
+                    <td className="px-3 py-1"><Conf v={m.confidence[0].toUpperCase() + m.confidence.slice(1)} /></td>
+                    <td className="px-3 py-1"><Level level={LEVEL[m.status] ? m.status : "inferred"} small /></td>
+                  </tr>
+                );
+              })}
+              {ex.metrics.length === 0 && <tr><td colSpan={7} className="px-3 py-4 text-center" style={{ color: T.muted }}>No financial metrics were cited in this document.</td></tr>}
+              </tbody>
             </table>
           </Card>
           <div className="grid grid-cols-2 gap-3">
             {sections.map(([h, items]) => (
               <Card key={h} pad={false}>
                 <div className="flex items-center justify-between px-3 py-1.5" style={{ borderBottom: `1px solid ${T.border}` }}>
-                  <span className="text-xs font-medium" style={{ color: h === "Potential risks" ? T.red : h === "Missing information" ? T.unknown : T.text }}>{h}</span>
+                  <span className="text-xs font-medium" style={{ color: h === "Potential risks" || h === "Inconsistencies" ? T.red : T.text }}>{h}{h === "Inconsistencies" && items.length > 0 ? ` (${items.length})` : ""}</span>
                   <label className="flex items-center gap-1 text-xs cursor-pointer" style={{ color: review[h] ? T.green : T.muted }}><input type="checkbox" checked={!!review[h]} onChange={() => mark(h)} /> {review[h] ? "Reviewed" : "Mark reviewed"}</label>
                 </div>
                 <ul className="px-3 py-2 space-y-1.5 text-xs" style={{ color: T.text }}>
-                  {items.map(([t, p, l], i) => <li key={i} className="flex items-start justify-between gap-2"><span>{t}{p && <Cite p={p} />}</span>{l && <Level level={l} small />}</li>)}
+                  {items.length === 0 && <li style={{ color: T.muted }}>{h === "Inconsistencies" ? "No internal inconsistencies identified." : "Not addressed in this document."}</li>}
+                  {items.map((it, i) => <li key={i} className="flex items-start justify-between gap-2"><span>{it.text}<Cite p={it.page} /></span><Level level={it.severity ? "risk" : LEVEL[it.status] ? it.status : "inferred"} small /></li>)}
                 </ul>
               </Card>
             ))}
+            <Card pad={false}>
+              <div className="flex items-center justify-between px-3 py-1.5" style={{ borderBottom: `1px solid ${T.border}` }}><span className="text-xs font-medium" style={{ color: T.text }}>Key diligence questions</span><label className="flex items-center gap-1 text-xs cursor-pointer" style={{ color: review.q ? T.green : T.muted }}><input type="checkbox" checked={!!review.q} onChange={() => mark("q")} /> {review.q ? "Reviewed" : "Mark reviewed"}</label></div>
+              <ul className="px-3 py-2 space-y-1.5 text-xs" style={{ color: T.text }}>{ex.diligence_questions.map((q, i) => <li key={i} className="flex items-start justify-between gap-2"><span>{q.question}<Cite p={q.page} /></span><span className="shrink-0 flex items-center gap-1"><span style={{ fontSize: 10.5, color: T.muted }}>{q.workstream}</span><Sev v={q.severity[0].toUpperCase() + q.severity.slice(1)} /></span></li>)}</ul>
+            </Card>
+            <Card pad={false}>
+              <div className="flex items-center justify-between px-3 py-1.5" style={{ borderBottom: `1px solid ${T.border}` }}><span className="text-xs font-medium" style={{ color: T.unknown }}>Missing information</span><label className="flex items-center gap-1 text-xs cursor-pointer" style={{ color: review.m ? T.green : T.muted }}><input type="checkbox" checked={!!review.m} onChange={() => mark("m")} /> {review.m ? "Reviewed" : "Mark reviewed"}</label></div>
+              <ul className="px-3 py-2 space-y-1.5 text-xs">{ex.missing_information.map((m, i) => <li key={i} className="flex items-start justify-between gap-2"><span><span style={{ color: T.unknown }}>{m.text}</span><span style={{ color: T.muted }}> · {m.why_it_matters}</span></span><Level level="unknown" small /></li>)}{ex.missing_information.length === 0 && <li style={{ color: T.muted }}>No gaps identified.</li>}</ul>
+            </Card>
           </div>
         </div>
         <div className="col-span-4 space-y-3">
           <Card pad={false}>
-            <div className="px-3 py-1.5 text-xs font-medium flex items-center justify-between" style={{ borderBottom: `1px solid ${T.border}`, background: "#fafaf8", color: T.text }}><span>Source excerpt</span><span style={{ color: T.accent }}>{src}</span></div>
+            <div className="px-3 py-1.5 text-xs font-medium flex items-center justify-between" style={{ borderBottom: `1px solid ${T.border}`, background: "#fafaf8", color: T.text }}><span>Source</span><span style={{ color: T.accent }}>{page != null ? `Page ${page}` : "No page"}</span></div>
             <div className="p-3">
-              <p className="text-xs leading-relaxed" style={{ color: T.text, fontFamily: "Georgia, serif" }}>{CIM_EXCERPTS[src]}</p>
-              <div className="text-xs mt-2" style={{ color: T.unknown }}>Synthetic demonstration excerpt. Click any page reference to change the excerpt.</div>
+              <div style={{ fontSize: 11, color: T.muted, marginBottom: 6 }}>{doc.name} · {isDemo ? "Synthetic" : "Uploaded"} · {excerptsFor(page).length} cited finding{excerptsFor(page).length === 1 ? "" : "s"} on this page</div>
+              {page == null ? <div style={{ fontSize: 12, color: T.unknown }}>This item has no supporting page in the document. It is recorded as unknown, not as a finding.</div> : excerptsFor(page).length === 0 ? <div style={{ fontSize: 12, color: T.muted }}>No excerpt captured for this page.</div> : excerptsFor(page).map((f, i) => (
+                <div key={i} className="pb-3 mb-3" style={{ borderBottom: i < excerptsFor(page).length - 1 ? `1px solid ${T.border}` : "none" }}>
+                  {!isDemo && <div style={{ fontSize: 11.5, color: T.text, marginBottom: 4 }}><span style={{ color: T.muted }}>Claim: </span>{f.text}</div>}
+                  <p className="text-xs leading-relaxed" style={{ color: T.text, fontFamily: "Georgia, serif" }}>{f.excerpt || f.text}</p>
+                </div>
+              ))}
+              <div className="flex items-center gap-2" style={{ fontSize: 11, color: T.muted }}><Level level="confirmed" small /> Extraction status: {isDemo ? "synthetic demonstration excerpt" : "cited by the model, verify against the page"}</div>
             </div>
           </Card>
           <Card pad={false}>
-            <div className="px-3 py-1.5 text-xs font-medium" style={{ borderBottom: `1px solid ${T.border}`, background: "#fafaf8", color: T.text }}>Pages referenced</div>
-            <div className="p-2 grid grid-cols-3 gap-1">{Object.keys(CIM_EXCERPTS).map((p) => <button key={p} onClick={() => setSrc(p)} className="text-xs px-1.5 py-1 rounded-lg tabular-nums" style={{ border: `1px solid ${src === p ? T.accent : T.border}`, color: src === p ? T.accent : T.text }}>{p.replace("CIM ", "")}</button>)}</div>
+            <div className="px-3 py-1.5 text-xs font-medium" style={{ borderBottom: `1px solid ${T.border}`, background: "#fafaf8", color: T.text }}>Pages cited</div>
+            <div className="p-2 flex flex-wrap gap-1">{pagesCited.map((pg) => <button key={pg} onClick={() => setPage(pg)} className="text-xs px-2 py-1 rounded-lg tabular-nums" style={{ border: `1px solid ${page === pg ? T.accent : T.border}`, color: page === pg ? T.accent : T.text }}>p. {pg}</button>)}</div>
           </Card>
+          {conflictsHere.filter((c) => c.status !== "pending").length > 0 && (
+            <Card pad={false}>
+              <div className="px-3 py-1.5 text-xs font-medium" style={{ borderBottom: `1px solid ${T.border}`, background: "#fafaf8", color: T.text }}>Resolved conflicts</div>
+              <div className="p-3 space-y-1.5">{conflictsHere.filter((c) => c.status !== "pending").map((c) => <div key={c.id} style={{ fontSize: 12 }}><span style={{ color: T.text }}>{c.metric}</span> <span style={{ color: T.muted }}>{c.previous.value} vs {c.current.value}</span> <Pri p={c.status === "review" ? "review" : "healthy"} label={c.status === "accepted" ? "New value accepted" : c.status === "kept" ? "Existing kept" : "For review"} /></div>)}</div>
+            </Card>
+          )}
           <Card>
             <div className="text-xs font-medium mb-1" style={{ color: T.text }}>Analyst sign-off</div>
             <div className="text-xs mb-2" style={{ color: T.muted }}>Extraction is locked for the IC memo only after every section is marked reviewed by a member of the deal team.</div>
             <div className="flex flex-col gap-1.5">
-              <Btn primary disabled={reviewed < sections.length} onClick={() => notify("Extraction locked for IC memo. Reviewed by B. Kingsbury.")}>Lock extraction for IC memo</Btn>
+              <Btn primary disabled={reviewed < totalSections} onClick={() => { audit({ actor: "M. Ahmed", kind: "human", action: "Locked extraction for IC memo", subject: doc.name }); notify("Extraction locked for IC memo. Reviewed by B. Kingsbury."); }}>Lock extraction for IC memo</Btn>
               <Btn icon={ShieldAlert} onClick={() => go("redteam")}>Open Red Team findings</Btn>
               <Btn icon={FileSignature} onClick={() => go("icmemo")}>Open IC memo draft</Btn>
             </div>
@@ -2114,7 +2292,11 @@ function Knowledge() {
   );
 }
 function ResearchLibrary() {
-  const docs = [["Medical device outsourcing outlook 2026", "Market research", "Market Agent", "Today", "Medical Device thesis", Globe], ["Aerospace build-rate tracker Q3", "Market research", "Market Agent", "Yesterday", "Aerospace thesis", Globe], ["Precision molder peer margin set (8 companies)", "Benchmark", "Financial Agent", "2 days ago", "Medical Device thesis", BarChart3], ["Reshoring signals in component supply", "Market research", "Research Agent", "1 week ago", "Medical Device thesis", Globe], ["Elevator and escalator parts distribution map", "Sector map", "Research Agent", "2 weeks ago", "Distribution thesis", Layers], ["Market Research #14: Program dependency in aerospace suppliers", "Research note", "Red-Team Agent", "3 weeks ago", "Project Falcon", FileText]];
+  const { ws } = useWorkspace();
+  const [openRec, setOpenRec] = useState(null);
+  const session = ws.research.map((r) => [r.title, r.type, r.producedBy, new Date(r.created).toLocaleDateString(), r.deal || r.thesis, FileText, r]);
+  const docs0 = [["Medical device outsourcing outlook 2026", "Market research", "Market Agent", "Today", "Medical Device thesis", Globe], ["Aerospace build-rate tracker Q3", "Market research", "Market Agent", "Yesterday", "Aerospace thesis", Globe], ["Precision molder peer margin set (8 companies)", "Benchmark", "Financial Agent", "2 days ago", "Medical Device thesis", BarChart3], ["Reshoring signals in component supply", "Market research", "Research Agent", "1 week ago", "Medical Device thesis", Globe], ["Elevator and escalator parts distribution map", "Sector map", "Research Agent", "2 weeks ago", "Distribution thesis", Layers], ["Market Research #14: Program dependency in aerospace suppliers", "Research note", "Red-Team Agent", "3 weeks ago", "Project Falcon", FileText]];
+  const docs = [...session, ...docs0];
   const Sel = ({ label }) => <select className="bg-white" style={{ fontSize: 13, padding: "7px 12px", borderRadius: R.chip, border: `1px solid ${T.border}`, color: T.muted }}><option>{label}</option></select>;
   return (
     <div>
@@ -2125,8 +2307,16 @@ function ResearchLibrary() {
       </div>
       <Card pad={false}>
         <table className="w-full" style={{ fontSize: 13 }}><thead><tr style={{ color: T.muted, fontSize: 11 }}>{["Title", "Type", "Produced by", "Related to", "Updated"].map((h) => <th key={h} className="text-left font-medium px-4 py-2" style={{ borderBottom: `1px solid ${T.border}` }}>{h}</th>)}</tr></thead>
-          <tbody>{docs.map(([t, ty, a, u, rel, I]) => <tr key={t} className="hover:bg-stone-50 cursor-pointer" style={{ borderBottom: `1px solid ${T.border}` }}><td className="px-4 py-2.5 font-medium" style={{ color: T.text }}><span className="flex items-center gap-2"><I size={14} strokeWidth={1.6} style={{ color: T.muted }} />{t}</span></td><td className="px-4 py-2.5" style={{ color: T.muted }}>{ty}</td><td className="px-4 py-2.5" style={{ color: T.muted }}>{a}</td><td className="px-4 py-2.5"><span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 4, background: T.accentSoft, color: T.accent }}>{rel}</span></td><td className="px-4 py-2.5" style={{ color: T.muted }}>{u}</td></tr>)}</tbody></table>
+          <tbody>{docs.map(([t, ty, a, u, rel, I, rec]) => <tr key={t} onClick={() => rec && setOpenRec(rec)} className="hover:bg-stone-50 cursor-pointer" style={{ borderBottom: `1px solid ${T.border}` }}><td className="px-4 py-2.5 font-medium" style={{ color: T.text }}><span className="flex items-center gap-2"><I size={14} strokeWidth={1.6} style={{ color: T.muted }} />{t}</span></td><td className="px-4 py-2.5" style={{ color: T.muted }}>{ty}</td><td className="px-4 py-2.5" style={{ color: T.muted }}>{a}</td><td className="px-4 py-2.5"><span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 4, background: T.accentSoft, color: T.accent }}>{rel}</span></td><td className="px-4 py-2.5" style={{ color: T.muted }}>{u}{rec ? <span className="ml-2" style={{ fontSize: 10.5, padding: "1px 6px", borderRadius: 999, background: T.greenSoft, color: T.green }}>Session</span> : null}</td></tr>)}</tbody></table>
       </Card>
+      {openRec && (
+        <Modal title={openRec.title} onClose={() => setOpenRec(null)} wide>
+          <div className="grid grid-cols-3 gap-4" style={{ fontSize: 13 }}>
+            <div className="col-span-2"><div style={{ fontSize: 11, color: T.muted, marginBottom: 4 }}>Summary</div><p style={{ color: T.text, lineHeight: 1.6 }}>{openRec.summary}</p>{openRec.findings?.length > 0 && <><div style={{ fontSize: 11, color: T.muted, margin: "12px 0 4px" }}>Key findings</div><ul className="list-disc pl-4 space-y-1" style={{ color: T.text }}>{openRec.findings.map((f, i) => <li key={i}>{f}</li>)}</ul></>}</div>
+            <div>{[["Type", openRec.type], ["Related deal", openRec.deal || ""], ["Related thesis", openRec.thesis || ""], ["Produced by", openRec.producedBy], ["Created", new Date(openRec.created).toLocaleString()], ["Sources", (openRec.sources || []).join("; ")]].map(([k, v]) => <KV key={k} k={k} v={v} />)}</div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

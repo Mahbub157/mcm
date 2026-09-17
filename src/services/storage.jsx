@@ -16,6 +16,10 @@ const EMPTY = {
   liveScores: {},      // companyId -> { fit, rationale, confidence, thesis, versionId }
   redTeam: {},         // dealName -> { result, source, meta, dispositions: {idx: label}, createdAt }
   audit: [],           // [{ id, time, actor, kind: human|ai|system, action, subject, detail }]
+  documents: {},       // dealName -> [{ id, name, source: uploaded, createdAt, pages, extraction, findings, meta }]
+  conflicts: [],       // [{ id, deal, metric, previous: {value,page,source}, current: {value,page,source}, status: pending|accepted|kept|review, explanation, createdAt, resolvedAt }]
+  events: [],          // intelligence feed [{ id, time, deal, kind, severity, title, detail, source, page }]
+  research: [],        // research library records [{ id, title, type, deal, thesis, producedBy, created, sources, summary, findings }]
 };
 
 function load() {
@@ -40,6 +44,11 @@ export function WorkspaceProvider({ children }) {
       clearLiveScores: () => update((w) => ({ ...w, liveScores: {} })),
       setRedTeam: (deal, data) => update((w) => ({ ...w, redTeam: { ...w.redTeam, [deal]: { ...(w.redTeam[deal] || {}), ...data } } })),
       setDisposition: (deal, idx, label) => update((w) => { const cur = w.redTeam[deal] || {}; return { ...w, redTeam: { ...w.redTeam, [deal]: { ...cur, dispositions: { ...(cur.dispositions || {}), [idx]: label } } } }; }),
+      addDocument: (deal, doc) => update((w) => ({ ...w, documents: { ...w.documents, [deal]: [doc, ...(w.documents[deal] || [])] } })),
+      addConflicts: (list) => update((w) => ({ ...w, conflicts: [...list, ...w.conflicts] })),
+      resolveConflict: (id, status) => update((w) => ({ ...w, conflicts: w.conflicts.map((c) => (c.id === id ? { ...c, status, resolvedAt: new Date().toISOString() } : c)) })),
+      addEvents: (list) => update((w) => ({ ...w, events: [...list, ...w.events].slice(0, 200) })),
+      addResearch: (rec) => update((w) => ({ ...w, research: [rec, ...w.research] })),
       reset: () => { try { sessionStorage.removeItem(KEY); sessionStorage.removeItem("mcm.aiLog"); } catch {} setWs(EMPTY); },
     };
   }, [ws]);

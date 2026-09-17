@@ -126,7 +126,47 @@ export const analyzeThesis = (input, opts) => callAi("thesis_analysis", input, o
 export const runRedTeam = (input, opts) => callAi("red_team", input, { preferredModelTier: "advanced", ...opts });
 
 /* Placeholders wired in later phases; they resolve to fallback until then. */
-export const analyzeCIM = (input, opts = {}) => Promise.resolve({ data: resolveFallback(opts.fallback), source: "demo", meta: { task: "document_analysis", status: "not_implemented" } });
+/*
+ * analyzeCIM({ file }) -> { data: { findings, extraction, pages }, source, meta, error? }
+ * Validates locally, sends base64 to /api/document, never stores the PDF.
+ */
+export const DOC_LIMITS = { maxBytes: 3 * 1024 * 1024, mime: "application/pdf" };
+export function validateDocument(file) {
+  if (!file) return "Choose a PDF to analyze.";
+  const name = (file.name || "").toLowerCase();
+  if (file.type !== DOC_LIMITS.mime && !name.endsWith(".pdf")) return "Only PDF documents are supported.";
+  if (file.size === 0) return "The file is empty.";
+  if (file.size > DOC_LIMITS.maxBytes) return "The document is larger than 3 MB. Split it or upload a shorter excerpt.";
+  return null;
+}
+function readBase64(file) {
+  return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result).split(",")[1] || ""); r.onerror = () => reject(new Error("Read failed")); r.readAsDataURL(file); });
+}
+export async function analyzeCIM({ file }, { fallback, timeoutMs = 65_000, signal } = {}) {
+  const started = Date.now();
+  const invalid = validateDocument(file);
+  if (invalid) return { data: resolveFallback(fallback), source: "demo", meta: { task: "document_analysis", status: "rejected" }, error: invalid };
+  if (!state.probed) await probeAiStatus();
+  if (state.mode === "demo") return { data: resolveFallback(fallback), source: "demo", meta: { task: "document_analysis", status: "demo" }, error: "Live analysis is not configured on this deployment." };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  if (signal) signal.addEventListener("abort", () => ctrl.abort(), { once: true });
+  try {
+    const data = await readBase64(file);
+    const r = await fetch("/api/document", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ filename: file.name, mime: "application/pdf", data }), signal: ctrl.signal });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { const err = new Error(j.error || "Document analysis failed"); err.code = j.code || "UPSTREAM"; err.friendly = j.error; throw err; }
+    if (!TASKS.document_normalize.validate(j.extraction) || !Array.isArray(j.findings)) { const err = new Error("Schema mismatch"); err.code = "SCHEMA"; throw err; }
+    const meta = { ...(j.meta || {}), task: "document_analysis", status: "complete" };
+    appendLog({ ...meta, source: "live" });
+    return { data: { findings: j.findings, extraction: j.extraction, pages: j.pages }, source: "live", meta };
+  } catch (e) {
+    const code = e?.name === "AbortError" ? (signal?.aborted ? "CANCELLED" : "TIMEOUT") : e?.code || "NETWORK";
+    const meta = { task: "document_analysis", status: code === "CANCELLED" ? "cancelled" : "failed", code, latencyMs: Date.now() - started, timestamp: new Date().toISOString() };
+    appendLog({ ...meta, source: "live" });
+    return { data: resolveFallback(fallback), source: "demo", meta, error: code === "CANCELLED" ? null : e?.friendly || friendlyAiError(code) };
+  } finally { clearTimeout(timer); }
+}
 export const generateFounderQuestions = (input, opts) => callAi("ask", { question: "Draft questions for the founder.", context: input.context }, opts);
 export const generateOutreachDraft = (input, opts = {}) => Promise.resolve({ data: resolveFallback(opts.fallback), source: "demo", meta: { task: "outreach_draft", status: "not_implemented" } });
 export const generateICMemo = (input, opts = {}) => Promise.resolve({ data: resolveFallback(opts.fallback), source: "demo", meta: { task: "ic_memo", status: "not_implemented" } });

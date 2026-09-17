@@ -38,6 +38,13 @@ const claimItem = {
   required: ["text", "status", "confidence"],
 };
 
+const docClaim = {
+  type: "object",
+  properties: { text: { type: "string" }, page: { type: "integer", description: "Page number from the grounded findings; must be one of the pages that appeared there" }, status: STATUS, confidence: CONF },
+  required: ["text", "page", "status", "confidence"],
+};
+const docList = { type: "array", items: docClaim };
+
 export const TASKS = {
   /* ---------------------------------------------------------------- ask */
   ask: {
@@ -163,6 +170,53 @@ the deal team does.`,
     },
     validate: (d) => isObj(d) && arr(d.findings) && d.findings.length > 0 && str(d.overall_assessment) && arr(d.bull_case) && arr(d.bear_case),
   },
+
+  /* --------------------------------------------------- document_normalize */
+  document_normalize: {
+    tool: "normalize_document_findings",
+    description: "Convert grounded, page-cited document findings into the MCM Intelligence CIM schema without adding claims.",
+    maxTokens: 4000,
+    system: HOUSE_RULES + `
+You receive findings that were extracted from a document in a previous pass, each with a page
+number and the supporting excerpt. Your only job is to organize them into the application schema.
+Hard rules: do not add any claim, number or page that is not present in the findings; if a
+schema field has no supporting finding, leave its list empty or mark the value as not disclosed
+with status unknown. Keep the original page number on every item. Prefer exact figures as written.
+Inconsistencies means places where the document contradicts itself or where the figures do not
+reconcile. Investment fit is judged against MCM criteria: revenue $8M-$50M, EBITDA $1.5M-$6M,
+manufacturing gross margin 30%+, distribution 20%+, and is 'unclear' when key figures are missing.`,
+    buildUser: ({ findings, filename }) => `DOCUMENT: ${filename}
+
+GROUNDED FINDINGS (JSON, from the citation pass):
+${findings}
+
+Organize these into the schema. Never invent.`,
+    schema: {
+      type: "object",
+      properties: {
+        company_name: { type: "string" },
+        overview: { type: "string", description: "Two to four sentences drawn only from the findings" },
+        investment_fit: { type: "string", enum: ["strong", "potential", "weak", "unclear"] },
+        confidence: CONF,
+        metrics: { type: "array", items: { type: "object", properties: {
+          metric: { type: "string", enum: ["Revenue", "Revenue growth", "Gross profit", "Gross margin", "Reported EBITDA", "EBITDA adjustments", "Adjusted EBITDA", "Adjusted EBITDA margin", "Capex", "Employees", "Top customer share", "Top 5 customer share", "Net working capital", "Facilities", "Other"] },
+          label: { type: "string", description: "Display label, e.g. 'Revenue FY2025'" }, value: { type: "string" }, period: { type: "string" }, page: { type: "integer" }, status: STATUS, confidence: CONF,
+        }, required: ["metric", "label", "value", "page", "status", "confidence"] } },
+        investment_highlights: docList,
+        risks: { type: "array", items: { ...docClaim, properties: { ...docClaim.properties, severity: SEV }, required: [...docClaim.required, "severity"] } },
+        customer_concentration: docList,
+        end_market_exposure: docList,
+        facilities_and_operations: docList,
+        management: docList,
+        ebitda_adjustments: docList,
+        inconsistencies: docList,
+        missing_information: { type: "array", items: { type: "object", properties: { text: { type: "string" }, why_it_matters: { type: "string" } }, required: ["text", "why_it_matters"] } },
+        diligence_questions: { type: "array", items: { type: "object", properties: { question: { type: "string" }, workstream: { type: "string", enum: ["Financial", "Commercial", "Operational", "Legal", "Management", "Technology", "Cybersecurity", "ESG"] }, page: { type: "integer" }, severity: SEV }, required: ["question", "workstream", "severity"] } },
+      },
+      required: ["company_name", "overview", "investment_fit", "confidence", "metrics", "investment_highlights", "risks", "customer_concentration", "end_market_exposure", "facilities_and_operations", "management", "ebitda_adjustments", "inconsistencies", "missing_information", "diligence_questions"],
+    },
+    validate: (d) => isObj(d) && str(d.overview) && arr(d.metrics) && arr(d.risks) && arr(d.missing_information) && arr(d.diligence_questions),
+  },
 };
 
 /* Conceptual model tiers. The server maps a tier to a concrete model id via env. */
@@ -171,6 +225,7 @@ export const TASK_TIER = {
   company_analysis: "balanced",
   thesis_analysis: "balanced",
   red_team: "advanced",
+  document_normalize: "balanced",
 };
 
 function isObj(x) { return x && typeof x === "object" && !Array.isArray(x); }

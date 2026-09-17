@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { askIntelligence, useAiMode, probeAiStatus, getAiModel } from "./services/aiClient.js";
 import {
   LayoutGrid, Lightbulb, Radar, Building2, Network, Send, Kanban, FileText, ClipboardCheck,
   ShieldAlert, FileSignature, Briefcase, TrendingUp, BookOpen, Library, Activity, FlaskConical,
@@ -383,6 +384,17 @@ function Sidebar({ route, go, collapsed, setCollapsed }) {
   );
 }
 
+/* ---------- AI mode indicator (unobtrusive) ---------- */
+function AiStatusPill() {
+  const mode = useAiMode();
+  const m = { live: ["Live AI", T.green], demo: ["Demo mode", T.unknown], checking: ["Checking", T.unknown] }[mode] || ["Demo mode", T.unknown];
+  return (
+    <span title={mode === "live" ? `Live analysis via ${getAiModel() || "configured model"}` : "Live analysis not configured; synthetic demonstration data is shown"} className="inline-flex items-center gap-1.5" style={{ fontSize: 12, color: T.muted }}>
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: m[1], boxShadow: mode === "live" ? `0 0 0 3px ${T.greenSoft}` : "none" }} />{m[0]}
+    </span>
+  );
+}
+
 function Topbar({ openSearch, openAsk, notify }) {
   const [showNotif, setShowNotif] = useState(false);
   return (
@@ -396,7 +408,8 @@ function Topbar({ openSearch, openAsk, notify }) {
         <I.search size={16} /> <span className="flex-1 text-left">Search companies, deals, documents, people</span>
         <span style={{ fontSize: 11, padding: "0 6px", borderRadius: 6, background: T.soft }}>Ctrl K</span>
       </button>
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex items-center justify-end gap-3">
+        <AiStatusPill />
         <div className="relative">
           <button onClick={() => setShowNotif(!showNotif)} className="relative flex items-center justify-center bg-white" style={{ width: 36, height: 36, borderRadius: 12, color: T.muted, boxShadow: "inset 0 0 0 1px " + T.border, transition: EASE }}>
             <I.bell size={17} />
@@ -480,6 +493,33 @@ function GlobalSearch({ onClose, go, openCompany }) {
 
 /* ---------- Ask MCM Intelligence ---------- */
 const ASK_Q = ["Why does this company fit MCM?", "What information are we missing?", "Compare this company with the active thesis.", "Red-team this opportunity.", "Draft questions for the founder.", "What would make us reject this company?"];
+/* Builds the plain-text context sent to live AI. Only facts already on screen are included. */
+const DEAL_CONTEXT = {
+  "Project Falcon": `Deal: Project Falcon (Falcon Precision Technologies), aerospace precision components, received via intermediary. Stage: Diligence, day 18. Owner: B. Kingsbury. EV range $42M-$48M.
+CIM extraction (synthetic CIM, page references): FY2025 revenue $38.2M (+8.1%, p.23); gross margin 35.4% (p.23); reported EBITDA $4.4M, adjustments $0.74M, adjusted EBITDA $5.1M (p.71); capex $2.4M (p.84); 168 employees (p.92); top customer 31%, top five 64%, Customer A agreement runs through Q3 2028, pricing mechanics not disclosed (p.48); commercial aerospace 58%, defense 27%, industrial 15% (p.58); management projects 12% CAGR, two thirds from Program X and Program Y (p.58); 42 CNC machines, ~78% utilization on two shifts (p.84); CEO/owner, tenured COO, CFO hired 2023, succession not addressed (p.92). Net working capital: not disclosed.
+Diligence: financial 86% complete, commercial 72%, legal 58%, management 45%; 47 open questions (11 legal); 3 material risks: Customer A concentration rose to 44% in latest month (data-room update), $740K adjustments partially recurring, change-of-control clause in Customer A agreement.
+Red team (if run): assumption 1 aerospace growth durable (medium); assumption 2 customer durability, agreement expires within 24 months of close (high); assumption 3 EBITDA adjustments reasonable, relocation costs recurred in two of three years (high).
+Open questions: Customer A renewal terms and pricing history; which adjustments recur; downside case for 18-month program slip.`,
+};
+function buildAskContext(ctx) {
+  if (ctx.company) {
+    const c = ctx.company;
+    const ev = c.id === "pms" ? EVIDENCE.map((e) => `- ${e.claim} [${e.level}, confidence ${e.conf}, sources: ${e.src.length ? e.src.join("; ") : "none"}]`).join("\n") : "- No evidence items collected yet for this company beyond the screening facts above.";
+    const tl = c.id === "pms" ? TIMELINE.map((t) => `- ${t.y}: ${t.t} [${t.level}]`).join("\n") : "- No relationship history recorded.";
+    return `Current workspace: Company Intelligence
+Company: ${c.name}
+Sector: ${c.sector}. Location: ${c.loc}. Ownership: ${c.own}. Employees: ~${c.emp}.
+Active thesis: ${c.thesis}
+Screening estimates (external models, not company data): revenue ${money(c.rev)}, EBITDA ${money(c.ebitda)}, gross margin ${pct(c.gm)}. MCM fit score ${c.fit}/100, confidence ${c.conf}. Relationship: ${c.rel}. Primary signal: ${c.signal}. Primary open risk: ${c.risk}.
+MCM criteria: revenue $8M-$50M, EBITDA $1.5M-$6M, manufacturing gross margin 30%+, distribution 20%+, US, entrepreneurially led, customer concentration screening threshold 40%.
+Evidence items:
+${ev}
+Relationship history:
+${tl}`;
+  }
+  if (ctx.deal && DEAL_CONTEXT[ctx.deal]) return `Current workspace: ${ctx.deal}\n${DEAL_CONTEXT[ctx.deal]}`;
+  return "Current workspace: MCM Intelligence command center. Pipeline: universe 1,284, screened 428, MCM fit 143, priority 37, contacted 21, active dialogue 12, diligence 3, IC 1. Active theses: Medical Device Injection Molding, Aerospace Precision Components, Engineered Thermal Management, Specialty Industrial Distribution. No company or deal is selected.";
+}
 function askAnswer(q, ctx) {
   const name = ctx.company ? ctx.company.name : ctx.deal || "the current context";
   const c = ctx.company;
@@ -533,10 +573,13 @@ function AskPanel({ ctx, onClose }) {
   const [thread, setThread] = useState([]);
   const [busy, setBusy] = useState(false);
   const [input, setInput] = useState("");
-  const ask = (q) => {
+  const ask = async (q) => {
     setThread((t) => [...t, { role: "user", q }]);
     setBusy(true);
-    setTimeout(() => { setThread((t) => [...t, { role: "ai", a: askAnswer(q, ctx), q }]); setBusy(false); }, 900);
+    const res = await askIntelligence({ question: q, context: buildAskContext(ctx) }, { fallback: () => askAnswer(q, ctx) });
+    const a = res.source === "live" ? { conclusion: res.data.conclusion, reasoning: res.data.reasoning, evidence: res.data.evidence, uncertainty: res.data.uncertainty, next: res.data.next_action, insufficient: res.data.enough_evidence === false } : res.data;
+    setThread((t) => [...t, { role: "ai", a, q, source: res.source, error: res.error || null, meta: res.meta }]);
+    setBusy(false);
   };
   return (
     <div className="fixed right-3 top-3 bottom-3 w-[420px] bg-white z-40 flex flex-col overflow-hidden" style={{ borderRadius: R.hero, boxShadow: SHADOW_HOVER }}>
@@ -561,19 +604,21 @@ function AskPanel({ ctx, onClose }) {
             <div key={i} className="text-sm px-3 py-2 rounded self-end" style={{ background: T.accentSoft, color: T.text }}>{m.q}</div>
           ) : (
             <div key={i} className="text-sm rounded p-3 space-y-2" style={{ border: `1px solid ${T.border}` }}>
+              {m.error && <div className="flex items-center justify-between gap-2 px-2 py-1.5" style={{ background: T.amberSoft, color: T.amber, borderRadius: 8, fontSize: 12 }}><span>{m.error} Showing the synthetic demonstration answer instead.</span><button onClick={() => ask(m.q)} className="underline shrink-0">Retry live</button></div>}
+              {m.a.insufficient && <div className="px-2 py-1.5" style={{ background: T.unknownSoft, color: T.unknown, borderRadius: 8, fontSize: 12 }}>Not enough evidence available for a confident answer.</div>}
               <div><div className="text-xs font-medium mb-0.5" style={{ color: T.muted }}>Conclusion</div><div className="font-medium" style={{ color: T.text }}>{m.a.conclusion}</div></div>
               <div><div className="text-xs font-medium mb-0.5" style={{ color: T.muted }}>Reasoning</div><div style={{ color: T.text }}>{m.a.reasoning}</div></div>
               <div><div className="text-xs font-medium mb-0.5" style={{ color: T.muted }}>Evidence</div><ul className="list-disc pl-4 space-y-0.5" style={{ color: T.text }}>{m.a.evidence.map((e, j) => <li key={j}>{e}</li>)}</ul></div>
               <div><div className="text-xs font-medium mb-0.5" style={{ color: T.amber }}>Uncertainty</div><div style={{ color: T.text }}>{m.a.uncertainty}</div></div>
               <div className="pt-1" style={{ borderTop: `1px solid ${T.border}` }}><div className="text-xs font-medium mb-0.5" style={{ color: T.accent }}>Recommended next action</div><div style={{ color: T.text }}>{m.a.next}</div></div>
-              <div className="text-xs pt-1" style={{ color: T.muted }}>AI-assisted response. Investment professional judgment required.</div>
+              <div className="flex items-center justify-between text-xs pt-1" style={{ color: T.muted }}><span>AI-assisted response. Investment professional judgment required.</span><span style={{ fontSize: 11, padding: "1px 7px", borderRadius: 999, background: m.source === "live" ? T.greenSoft : T.unknownSoft, color: m.source === "live" ? T.green : T.unknown }}>{m.source === "live" ? `Live${m.meta?.latencyMs ? ` · ${(m.meta.latencyMs / 1000).toFixed(1)}s` : ""}` : "Demo"}</span></div>
             </div>
           )
         )}
-        {busy && <div className="flex items-center gap-2 text-xs" style={{ color: T.muted }}><Loader2 size={12} className="animate-spin" /> Reading evidence for {ctx.company ? ctx.company.name : "context"}</div>}
+        {busy && <div className="flex items-center gap-2 text-xs" style={{ color: T.muted }}><Loader2 size={12} className="animate-spin" /> Reading evidence for {ctx.company ? ctx.company.name : ctx.deal || "this workspace"}</div>}
       </div>
       <div className="p-3 flex gap-2" style={{ borderTop: `1px solid ${T.border}` }}>
-        <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && input) { ask(input); setInput(""); } }} placeholder="Ask about this company or deal" className="flex-1 text-sm px-3 py-1.5 rounded outline-none" style={{ border: `1px solid ${T.border}` }} />
+        <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && input) { ask(input); setInput(""); } }} placeholder="Ask anything about this company or deal" disabled={busy} className="flex-1 text-sm px-3 py-1.5 rounded outline-none disabled:opacity-60" style={{ border: `1px solid ${T.border}` }} />
         <Btn primary small onClick={() => { if (input) { ask(input); setInput(""); } }}>Ask</Btn>
       </div>
     </div>
@@ -1955,6 +2000,7 @@ export default function App() {
   const go = (r) => { setRoute(r); if (r !== "discovery" && r !== "pipeline") setStageFilter(null); if (r === "discovery") setStageFilter((s) => s); window.scrollTo(0, 0); };
   const openThesis = (name) => { setThesisCtx(name); setRoute("thesis"); window.scrollTo(0, 0); };
   const openCompany = (id) => { setCompanyId(id); setRoute("company"); window.scrollTo(0, 0); };
+  useEffect(() => { probeAiStatus(); }, []);
   useEffect(() => {
     const h = (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setSearch(true); } if (e.key === "Escape") { setSearch(false); } };
     window.addEventListener("keydown", h); return () => window.removeEventListener("keydown", h);
